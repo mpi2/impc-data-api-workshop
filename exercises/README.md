@@ -1,1 +1,1 @@
-Here is the folder with the exercises and answers.
+Here is the folder with the exercises.
