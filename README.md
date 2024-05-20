@@ -17,7 +17,7 @@ We recommend using Python 3.10
    ```
 
 2.  **Install Jupyter Notebook**:
-   You can find the installation instructions [here](https://jupyter.org/install#jupyter-notebook). If you are using a virtual environment, make sure you install Jyputer notebook inside the environment. 
+   You can find the installation instructions [here](https://jupyter.org/install#jupyter-notebook). If you are using a virtual environment, make sure you install Jupyter notebook inside the environment. 
 
 4. **Clone the repository**: Open your terminal and run:
    ```bash
