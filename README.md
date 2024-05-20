@@ -1,5 +1,15 @@
-# IMPC SOLR API Workshop Installation Guide
+# Data API Workshop Repository
+Welcome to the Data API Workshop repository! This repository is designed to provide all the resources you need to follow along with our workshop on building and using data APIs. Below is an overview of the contents of this repository:
+1. Exercises<br>
+The `exercises` folder contains hands-on practice tasks and correct answers. If you would like to go through the exercises, use `impc_workshop_exercises.ipynb`. If you would like to look at the correct answers, take a look at `impc_workshop_answers.ipynb`.
 
+2. Presentations<br>
+The `presentations` folder includes all the slide decks used during the workshop sessions.
+
+3. Cheat Sheet<br>
+The `cheat_sheet.ipynb` file is a Jupyter Notebook that serves as a quick reference guide for common API tasks and commands.
+
+# IMPC SOLR API Workshop Installation Guide
 Whether you attended the workshop or want to explore the exercises, here is a guide to work locally.
 <br>
 To use the Jupyter notebook with the exercises, you need to set up an environment to run it. We suggest two options:
