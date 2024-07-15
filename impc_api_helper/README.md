@@ -11,7 +11,7 @@ The functions in this package are intended for use on a Jupyter Notebook.
 3. Install the package running `pip install .`
 4. Try it out: Go to Jupyter Notebook and some examples below:
 
-### Avaialble functions
+### Available functions
 The available functions can be imported as:
 
 `from impc_api_helper import solr_request, batch_request, facet_request, iterator_solr_request`
