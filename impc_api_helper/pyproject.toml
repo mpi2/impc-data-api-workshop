@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "impc-_api_helper"
+name = "impc_api_helper"
 version = "0.1.0"
 description = "A package to facilitate making API requests to the IMPC Solr API"
 authors = [
