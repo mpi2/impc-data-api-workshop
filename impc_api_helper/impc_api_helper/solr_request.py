@@ -26,7 +26,7 @@ def solr_request(core, params, silent=False):
     
     Faceting query provides a summary of data distribution across the specified fields.
     Example faceting query:
-        num_found, df = facet_request(
+        num_found, df = solr_request(
         core='genotype-phenotype',
         params={
             'q': '*:*',
