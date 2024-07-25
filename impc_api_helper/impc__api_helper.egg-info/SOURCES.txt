@@ -1,0 +1,16 @@
+LICENSE
+README.md
+pyproject.toml
+setup.py
+impc__api_helper.egg-info/PKG-INFO
+impc__api_helper.egg-info/SOURCES.txt
+impc__api_helper.egg-info/dependency_links.txt
+impc__api_helper.egg-info/requires.txt
+impc__api_helper.egg-info/top_level.txt
+impc_api_helper/__init__.py
+impc_api_helper/facet_request.py
+impc_api_helper/iterator_solr_request.py
+impc_api_helper/solr_request.py
+tests/test_facet_request.py
+tests/test_iterator_solr_request.py
+tests/test_solr_request.py
