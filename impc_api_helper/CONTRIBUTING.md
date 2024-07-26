@@ -23,7 +23,7 @@ num_found, df = solr_request( core='genotype-phenotype', params={
 ## Installing the package for development
 We use [pytest](https://docs.pytest.org/en/stable/) for testing. To install in dev mode follow [stepts 1 and 2](#installing-the-package-for-use) above and then:
 
-3. Install the package running `pip install -e '.[dev]'`
+3. Install the package running `pip install '.[dev]'`
 This should install `pytest` and enable you to run tests:
 
 ```
