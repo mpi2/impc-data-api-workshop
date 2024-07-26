@@ -131,3 +131,70 @@ class TestSolrRequest:
         check_url_and_params(
             mock_response, expected_core=core, expected_params=common_params
         )
+
+    # Test for the facet request
+    # Params for a facet request
+    @pytest.fixture
+    def facet_params(self):
+        return {
+            "q": "*:*",
+            "rows": 0,
+            "facet": "on",
+            "facet.field": "colour",
+            "facet.limit": 3,
+            "facet.mincount": 1,
+        }
+
+    # Parameter containing a facet request response
+    @pytest.mark.parametrize(
+        "mock_response",
+        [
+            {
+                "status_code": 200,
+                "json": {
+                    "response": {
+                        "numFound": 1961,
+                        "docs": [],
+                    },
+                    "facet_counts": {
+                        "facet_queries": {},
+                        "facet_fields": {
+                            "colour": [
+                                "red",
+                                1954,
+                                "blue",
+                                1963,
+                                "black",
+                                1984,
+                            ]
+                        },
+                    },
+                },
+            }
+        ],
+        indirect=True,
+    )
+    def test_successful_facet_request(self, mock_response, core, facet_params):
+        # Call the function on facetmode
+        num_found, df = solr_request(core=core, params=facet_params)
+
+        # Assert results
+        assert num_found == 1961
+        assert df.shape == (3, 2)
+        assert df.iloc[0, 0] == "red"
+        assert df.iloc[0, 1] == 1954
+        assert df.iloc[1, 0] == "blue"
+        assert df.iloc[1, 1] == 1963
+        assert df.iloc[2, 0] == "black"
+        assert df.iloc[2, 1] == 1984
+
+        # Verify that the mock was called
+        mock_response.assert_called_once()
+
+        # Check the status code
+        assert mock_response.return_value.status_code == 200
+
+        # Checks the url and params called are as expected.
+        check_url_and_params(
+            mock_response, expected_core=core, expected_params=facet_params
+        )
