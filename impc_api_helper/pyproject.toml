@@ -20,7 +20,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 [project.urls]
-"Homepage" = "https://github.com/marinak-ebi/impc-workshop"
+"Homepage" = "https://github.com/mpi2/impc-data-api-workshop"
 
 [tool.setuptools]
 packages = ["impc_api_helper"]
