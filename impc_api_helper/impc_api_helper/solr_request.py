@@ -23,6 +23,20 @@ def solr_request(core, params, silent=False):
             'fl': 'marker_symbol,allele_symbol,parameter_stable_id',  # Fields to retrieve
         }
     )
+    
+    Faceting query provides a summary of data distribution across the specified fields.
+    Example faceting query:
+        num_found, df = solr_request(
+        core='genotype-phenotype',
+        params={
+            'q': '*:*',
+            'rows': 0,
+            'facet': 'on',
+            'facet.field': 'zygosity',
+            'facet.limit': 15,
+            'facet.mincount': 1
+        }
+    )
 
     When querying the phenodigm core, pass 'q': 'type:...'
     Example phenodigm query: 
@@ -59,13 +73,37 @@ def solr_request(core, params, silent=False):
         num_found = data["response"]["numFound"]
         if not silent:
             print(f"Number of found documents: {num_found}\n")
-        # Extract and add search results to the list
-        search_results = []
-        for doc in data["response"]["docs"]:
-            search_results.append(doc)
 
-        # Convert the list of dictionaries into a DataFrame and print the DataFrame
-        df = pd.DataFrame(search_results)
+        # For faceting query
+        if params.get('facet') == 'on':
+            # Extract and add faceting query results to the list
+            facet_counts = data["facet_counts"]["facet_fields"][params["facet.field"]]
+            # Initialize an empty dictionary
+            faceting_dict = {}
+            # Iterate over the list, taking pairs of elements
+            for i in range(0, len(facet_counts), 2):
+                # Assign label as key and count as value
+                label = facet_counts[i]
+                count = facet_counts[i + 1]
+                faceting_dict[label] = [count]
+
+            # Convert the list of dictionaries into a DataFrame and print the DataFrame
+            df = pd.DataFrame.from_dict(
+                    faceting_dict, orient="index", columns=["counts"]
+                ).reset_index()
+            # Rename the columns
+            df.columns = [params["facet.field"], "count_per_category"]
+
+        # For regular query
+        else:
+            # Extract and add search results to the list
+            search_results = []
+            for doc in data["response"]["docs"]:
+                search_results.append(doc)
+    
+            # Convert the list of dictionaries into a DataFrame and print the DataFrame
+            df = pd.DataFrame(search_results)
+        
         if not silent:
             display(df)
         return num_found, df

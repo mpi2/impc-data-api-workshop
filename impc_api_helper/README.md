@@ -14,7 +14,7 @@ The functions in this package are intended for use on a Jupyter Notebook.
 ### Available functions
 The available functions can be imported as:
 
-`from impc_api_helper import solr_request, batch_request, facet_request, iterator_solr_request`
+`from impc_api_helper import solr_request, batch_request, iterator_solr_request`
 
 ### Solr request
 The most basic request to the IMPC solr API
@@ -37,22 +37,6 @@ df = batch_request(
         'fl': 'allele_accession_id,life_stage_name,marker_symbol,mp_term_name,p_value,parameter_name,parameter_stable_id,phenotyping_center,statistical_method,top_level_mp_term_name,effect_size'
     },
     batch_size=100
-)
-```
-
-### Facet request
-To obtain faceted search results for the specified field
-```
-num_found, df = facet_request(
-    core='genotype-phenotype',
-    params={
-        'q': '*:*',
-        'rows': 0,
-        'facet': 'on',
-        'facet.field': 'zygosity',
-        'facet.limit': 15,
-        'facet.mincount': 1
-    }
 )
 ```
 
