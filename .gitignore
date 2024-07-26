@@ -1,0 +1,14 @@
+
+# Byte-compiled 
+__pycache__/
+
+# Distribution/ packaging
+build/
+dist/
+*.egg-info
+*.egg
+
+# Pytest
+*.pytest*
+*.pytest_cache
+__pycache__
