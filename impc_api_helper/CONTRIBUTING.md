@@ -4,7 +4,7 @@
 The package is build using [setuptools](https://setuptools.pypa.io/en/latest/userguide/quickstart.html) and [build](https://build.pypa.io/en/stable/installation.html).
 1. `pip install build` -- This installs setuptools automatically. 
 
-## Installing the package for the first time
+## Installing the package for use
 1. Clone the repository and navigate into it. Navigate into the package name until you can see `setup.py` and `pyproject.toml`
 2. Run `python3 -m build`, this builds the package, a couple of new files/folders will appear.
 3. Install the package running `pip install .`
@@ -20,6 +20,18 @@ num_found, df = solr_request( core='genotype-phenotype', params={
     }
 )
 ```
+## Installing the package for development
+We use [pytest](https://docs.pytest.org/en/stable/) for testing. To install in dev mode follow [stepts 1 and 2](#installing-the-package-for-use) above and then:
+
+3. Install the package running `pip install -e '.[dev]'`
+This should install `pytest` and enable you to run tests:
+
+```
+pytest tests/
+```
+
+Alternatively, create a venv and install pytest to run tests without having to install the package in dev mode.
+
 
 ## Making changes after installation 
 
