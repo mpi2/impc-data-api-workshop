@@ -7,15 +7,33 @@ from .test_helpers import check_url_and_params
 
 
 class TestSolrRequest:
+    """Test class for the Solr Request function
+
+    Uses a mock response (fixture) to mimic the content returned after fetching the solr API.
+    Each mock response is parameterized to have different response content and status code based on the API call.
+    Each test uses a different version of the mock response and asserts that the function returns the correct values.
+    """
+
     # Create a response fixture with modifiable status code and response content
     @pytest.fixture
     def mock_response(self, request):
+        """
+        Fixture to mock the response from the Solr API.
+
+        Args:
+            request (FixtureRequest): Request object provided by pytest containing the parameterized data
+
+        Yields:
+            MagicMock: A mock object "representing" the requests.get function used in solr_request.py.
+                        Its returned value is configured according to the parameterized data.
+        """
         with patch("solr_request.requests.get") as mock_get:
             mock_response = mock_get.return_value
             mock_response.status_code = request.param.get("status_code")
             mock_response.json.return_value = request.param.get("json")
             yield mock_get
 
+    # Parameter containing a successful mock response
     @pytest.mark.parametrize(
         "mock_response",
         [
@@ -35,8 +53,14 @@ class TestSolrRequest:
         ],
         indirect=True,
     )
-    # Sucessful test
+    # 200: Successful test
     def test_successful_request(self, mock_response):
+        """Tests a successful request to the Solr API
+
+        Args:
+            mock_response (MagicMock): A mock object "representing" the response from the Solr API
+            The parameters passed above are its contents
+        """
         # Call function
         num_found, df = solr_request(
             core="test_core", params={"q": "*:*", "rows": 4, "wt": "json"}
@@ -53,13 +77,24 @@ class TestSolrRequest:
         # Verify that the mock was called
         mock_response.assert_called_once()
 
+        # Check the status code
+        assert mock_response.return_value.status_code == 200
+
+        # Checks the url and params called are as expected.
         check_url_and_params(mock_response)
 
-    # 404 test
+    # Parameter containing expected 404 response
     @pytest.mark.parametrize(
         "mock_response", [{"status_code": 404, "json_data": {}}], indirect=True
     )
+    # 404: Error test
     def test_solr_request_error(self, mock_response):
+        """Tests an unsuccessful request to the Solr API with status_code 404.
+
+        Args:
+            mock_response (MagicMock): A mock object "representing" the response from the Solr API
+            The parameters passed above are its contents
+        """
         # Capture stdout
         captured_output = io.StringIO()
         with redirect_stdout(captured_output):
@@ -79,5 +114,5 @@ class TestSolrRequest:
         # Check the status code
         assert mock_response.return_value.status_code == 404
 
-        # Check the URL and parameters (if still relevant for error case)
+        # Check the URL and parameters
         check_url_and_params(mock_response)
