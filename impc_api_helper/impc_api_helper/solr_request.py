@@ -28,37 +28,37 @@ def solr_request(core, params, silent=False):
 
     Example query:
         num_found, df = solr_request(
-        core='genotype-phenotype',
-        params={
-            'q': '*:*',  # Your query, '*' retrieves all documents.
-            'rows': 10,  # Number of rows to retrieve.
-            'fl': 'marker_symbol,allele_symbol,parameter_stable_id',  # Fields to retrieve.
-        }
-    )
+            core='genotype-phenotype',
+            params={
+                'q': '*:*',  # Your query, '*' retrieves all documents.
+                'rows': 10,  # Number of rows to retrieve.
+                'fl': 'marker_symbol,allele_symbol,parameter_stable_id',  # Fields to retrieve.
+            }
+        )
     
     Faceting query provides a summary of data distribution across the specified fields.
     Example faceting query:
         num_found, df = solr_request(
-        core='genotype-phenotype',
-        params={
-            'q': '*:*',  # Your query, '*' retrieves all documents.
-            'rows': 0,  # Number of rows to retrieve.
-            'facet': 'on',  # Enable facet counts in query response.
-            'facet.field': 'zygosity',  # Identifies a field to be treated as a facet.
-            'facet.limit': 15,  # Controls how many constraints should be returned for each facet.
-            'facet.mincount': 1  # Specifies the minimum counts required be included in response.
-        }
-    )
+            core='genotype-phenotype',
+            params={
+                'q': '*:*',  # Your query, '*' retrieves all documents.
+                'rows': 0,  # Number of rows to retrieve.
+                'facet': 'on',  # Enable facet counts in query response.
+                'facet.field': 'zygosity',  # Identifies a field to be treated as a facet.
+                'facet.limit': 15,  # Controls how many constraints should be returned for each facet.
+                'facet.mincount': 1  # Specifies the minimum counts required be included in response.
+            }
+        )
 
     When querying the phenodigm core, pass 'q': 'type:...'
     Example phenodigm query: 
         num_found, df = solr_request(
-        core='phenodigm',
-        params={
-            'q': 'type:disease_model_summary',  # Pass the type within the core and filters.
-            'rows': 5
-        }
-    )
+            core='phenodigm',
+            params={
+                'q': 'type:disease_model_summary',  # Pass the type within the core and filters.
+                'rows': 5
+            }
+        )
     """
 
     base_url = "https://www.ebi.ac.uk/mi/impc/solr/"
