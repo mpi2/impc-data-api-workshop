@@ -1,7 +1,5 @@
-# IMPC-API-HELPER
-Name is a work in progress, we can think of something nicer
-
-README for draft impc-api python package.
+# IMPC_API_HELPER
+README for draft `impc_api_helper` python package.
 
 The functions in this package are intended for use on a Jupyter Notebook.
 
