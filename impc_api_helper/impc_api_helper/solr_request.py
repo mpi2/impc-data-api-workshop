@@ -98,23 +98,7 @@ def solr_request(core, params, silent=False):
 
         # For faceting query.
         if params.get('facet') == 'on':
-            # Extract and add faceting query results to the list.
-            facet_counts = data["facet_counts"]["facet_fields"][params["facet.field"]]
-            # Initialize an empty dictionary.
-            faceting_dict = {}
-            # Iterate over the list, taking pairs of elements.
-            for i in range(0, len(facet_counts), 2):
-                # Assign label as key and count as value.
-                label = facet_counts[i]
-                count = facet_counts[i + 1]
-                faceting_dict[label] = [count]
-
-            # Convert the list of dictionaries into a DataFrame and print the DataFrame.
-            df = pd.DataFrame.from_dict(
-                    faceting_dict, orient="index", columns=["counts"]
-                ).reset_index()
-            # Rename the columns.
-            df.columns = [params["facet.field"], "count_per_category"]
+            df = process_faceting(data, params)
 
         # For regular query.
         else:
