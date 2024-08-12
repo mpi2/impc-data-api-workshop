@@ -11,6 +11,24 @@ pd.set_option("display.max_columns", None)
 
 
 def process_faceting(data, params):
+    """Processes the faceting data from an API response.
+
+    Args:
+        data (dict): The JSON response from the API containing faceting information.
+        params (dict): Dictionary containing the API call parameters, including the facet field.
+
+    Returns:
+        pandas.DataFrame: A DataFrame with the facet field values and their corresponding counts.
+
+    Example usage:
+        df = process_faceting(
+            data=response.requests.get(solr_url, params=params).json(),
+            params={
+                'q': '*:*',  # Your query, '*' retrieves all documents.
+            }
+        )
+    """
+
     # Extract and add faceting query results to the list.
     facet_counts = data["facet_counts"]["facet_fields"][params["facet.field"]]
     # Initialize an empty dictionary.
