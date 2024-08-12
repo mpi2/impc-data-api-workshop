@@ -10,6 +10,26 @@ pd.set_option("display.max_rows", 15)
 pd.set_option("display.max_columns", None)
 
 
+def process_faceting(data, params):
+    # Extract and add faceting query results to the list.
+    facet_counts = data["facet_counts"]["facet_fields"][params["facet.field"]]
+    # Initialize an empty dictionary.
+    faceting_dict = {}
+    # Iterate over the list, taking pairs of elements.
+    for i in range(0, len(facet_counts), 2):
+        # Assign label as key and count as value.
+        label = facet_counts[i]
+        count = facet_counts[i + 1]
+        faceting_dict[label] = [count]
+
+    # Convert the list of dictionaries into a DataFrame and print the DataFrame.
+    df = pd.DataFrame.from_dict(
+            faceting_dict, orient="index", columns=["counts"]
+        ).reset_index()
+    # Rename the columns.
+    df.columns = [params["facet.field"], "count_per_category"]
+    return df
+
 # Create helper function
 def solr_request(core, params, silent=False):
     """Performs a single Solr request to the IMPC Solr API.
@@ -114,7 +134,7 @@ def solr_request(core, params, silent=False):
         print("Error:", response.status_code, response.text)
 
 
-# Batch request based on solr_request
+# Batch request based on solr_request.
 def batch_request(core, params, batch_size):
     """Calls `solr_request` multiple times with `params`
     to retrieve results in chunk `batch_size` rows at a time.
