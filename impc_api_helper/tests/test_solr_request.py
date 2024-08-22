@@ -115,8 +115,8 @@ class TestSolrRequest:
             result = solr_request(core=core, params=common_params)
 
         # Assert results
-        assert result is None  # Assuming your function returns None on error
-
+        assert result is None
+        
         # Check if "Error" was printed to console
         assert "Error" in captured_output.getvalue()
 
@@ -194,6 +194,35 @@ class TestSolrRequest:
         # Check the status code
         assert mock_response.return_value.status_code == 200
 
+        # Checks the url and params called are as expected.
+        check_url_and_params(
+            mock_response, expected_core=core, expected_params=facet_params
+        )
+
+    # Parameter containing expected 404 response
+    @pytest.mark.parametrize(
+        "mock_response", [{"status_code": 404, "json_data": {}}], indirect=True
+    )
+    def test_unsuccessful_facet_request(self, mock_response, core, facet_params):
+       
+        # Capture stdout
+        captured_output = io.StringIO()
+        with redirect_stdout(captured_output):
+            result = solr_request(core=core, params=facet_params)
+
+        # Assert results
+        assert result is None
+
+        # Check if "Error" was printed to console
+        assert "Error" in captured_output.getvalue()
+
+        # Verify that the mock was called
+        mock_response.assert_called_once()
+
+        # Check the status code
+        assert mock_response.return_value.status_code == 404
+
+        # Check the URL and parameters
         # Checks the url and params called are as expected.
         check_url_and_params(
             mock_response, expected_core=core, expected_params=facet_params
