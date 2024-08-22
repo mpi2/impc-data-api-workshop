@@ -1,6 +1,7 @@
-import json
-import requests
 import csv
+import json
+
+import requests
 
 
 # Helper function to fetch results. This function is used by the 'iterator_solr_request' function.
@@ -53,36 +54,35 @@ def iterator_solr_request(
     core, params, filename="iteration_solr_request", format="json"
 ):
     """Function to fetch results in batches from the Solr API and write them to a file.
-            Defaults to fetching 5000 rows at a time.
+    Defaults to fetching 5000 rows at a time.
+    Avoids cluttering local memory, ideal for large requests.
+    
+    Args:
+        core (str): The name of the Solr core to fetch results from.
+        params (dict): A dictionary of parameters to use in the filter query. Must include
+                       'field_list' and 'field_type' keys, which represent the list of field items (i.e., list of MGI model identifiers)
+                        to fetch and the type of the field (i.e., model_id) to filter on, respectively.
+        filename (str): The name of the file/path to write the results to. Defaults to 'iteration_solr_request'.
+        format (str): The format of the output file. Can be 'csv' or 'json'. Defaults to 'json'.
 
-        Avoids cluttering local memory, ideal for large requests.
+    Returns: None
 
     Example use case:
-    # List of model IDs.
-    models = ["MGI:3587188","MGI:3587185","MGI:3605874","MGI:2668213"]
+        # List of model IDs.
+        models = ['MGI:3587188', 'MGI:3587185', 'MGI:3605874', 'MGI:2668213']
 
-    # Call iterator function
-    iterator_solr_request(
-        core='phenodigm',
+        # Call iterator function
+        iterator_solr_request(
+            core='phenodigm',
             params = {
-            'q': 'type:disease_model_summary',
-            'fl': 'model_id,marker_id,disease_id',
-            'field_list': models,
-            'field_type': 'model_id'
-        },
-        filename='model_ids',
-        format='csv')
-
-        Args:
-            core (str): The name of the Solr core to fetch results from.
-            params (dict): A dictionary of parameters to use in the filter query. Must include
-                           'field_list' and 'field_type' keys, which represent the list of field items (i.e., list of MGI model identifiers)
-                            to fetch and the type of the field (i.e., model_id) to filter on, respectively.
-            filename (str): The name of the file/path to write the results to. Defaults to 'iteration_solr_request'.
-            format (str): The format of the output file. Can be 'csv' or 'json'. Defaults to 'json'.
-
-        Returns: None
-        
+                'q': 'type:disease_model_summary',
+                'fl': 'model_id,marker_id,disease_id',
+                'field_list': models,
+                'field_type': 'model_id'
+            },
+            filename='model_ids',
+            format='csv'
+        )
     """
 
     # Validate format
