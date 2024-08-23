@@ -65,7 +65,7 @@ class TestSolrRequest:
     )
 
     # 200: Successful test
-    def test_successful_request(sef, mock_response, core, common_params):
+    def test_successful_solr_request(self, mock_response, core, common_params):
         """Tests a successful request to the Solr API
 
         Args:
@@ -101,7 +101,7 @@ class TestSolrRequest:
         "mock_response", [{"status_code": 404, "json_data": {}}], indirect=True
     )
     # 404: Error test
-    def test_solr_request_error(self, mock_response, core, common_params):
+    def test_unsuccessful_solr_request(self, mock_response, core, common_params):
         """Tests an unsuccessful request to the Solr API with status_code 404.
 
         Args:
