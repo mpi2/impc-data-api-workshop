@@ -10,44 +10,6 @@ pd.set_option("display.max_rows", 15)
 pd.set_option("display.max_columns", None)
 
 
-def process_faceting(data, params):
-    """Processes the faceting data from an API response.
-
-    Args:
-        data (dict): The JSON response from the API containing faceting information.
-        params (dict): Dictionary containing the API call parameters, including the facet field.
-
-    Returns:
-        pandas.DataFrame: A DataFrame with the facet field values and their corresponding counts.
-
-    Example usage:
-        df = process_faceting(
-            data=response.requests.get(solr_url, params=params).json(),
-            params={
-                'q': '*:*',  # Your query, '*' retrieves all documents.
-            }
-        )
-    """
-
-    # Extract and add faceting query results to the list.
-    facet_counts = data["facet_counts"]["facet_fields"][params["facet.field"]]
-    # Initialize an empty dictionary.
-    faceting_dict = {}
-    # Iterate over the list, taking pairs of elements.
-    for i in range(0, len(facet_counts), 2):
-        # Assign label as key and count as value.
-        label = facet_counts[i]
-        count = facet_counts[i + 1]
-        faceting_dict[label] = [count]
-
-    # Convert the list of dictionaries into a DataFrame and print the DataFrame.
-    df = pd.DataFrame.from_dict(
-            faceting_dict, orient="index", columns=["counts"]
-        ).reset_index()
-    # Rename the columns.
-    df.columns = [params["facet.field"], "count_per_category"]
-    return df
-
 # Create helper function
 def solr_request(core, params, silent=False):
     """Performs a single Solr request to the IMPC Solr API.
@@ -134,6 +96,45 @@ def solr_request(core, params, silent=False):
 
     else:
         print("Error:", response.status_code, response.text)
+
+
+def _process_faceting(data, params):
+    """Processes the faceting data from an API response.
+
+    Args:
+        data (dict): The JSON response from the API containing faceting information.
+        params (dict): Dictionary containing the API call parameters, including the facet field.
+
+    Returns:
+        pandas.DataFrame: A DataFrame with the facet field values and their corresponding counts.
+
+    Example usage:
+        df = process_faceting(
+            data=response.requests.get(solr_url, params=params).json(),
+            params={
+                'q': '*:*',  # Your query, '*' retrieves all documents.
+            }
+        )
+    """
+
+    # Extract and add faceting query results to the list.
+    facet_counts = data["facet_counts"]["facet_fields"][params["facet.field"]]
+    # Initialize an empty dictionary.
+    faceting_dict = {}
+    # Iterate over the list, taking pairs of elements.
+    for i in range(0, len(facet_counts), 2):
+        # Assign label as key and count as value.
+        label = facet_counts[i]
+        count = facet_counts[i + 1]
+        faceting_dict[label] = [count]
+
+    # Convert the list of dictionaries into a DataFrame and print the DataFrame.
+    df = pd.DataFrame.from_dict(
+            faceting_dict, orient="index", columns=["counts"]
+        ).reset_index()
+    # Rename the columns.
+    df.columns = [params["facet.field"], "count_per_category"]
+    return df
 
 
 # Batch request based on solr_request.
