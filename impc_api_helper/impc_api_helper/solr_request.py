@@ -78,7 +78,7 @@ def solr_request(core, params, silent=False):
 
         # For faceting query.
         if params.get('facet') == 'on':
-            df = process_faceting(data, params)
+            df = _process_faceting(data, params)
 
         # For regular query.
         else:
