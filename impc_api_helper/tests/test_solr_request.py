@@ -98,7 +98,7 @@ class TestSolrRequest:
 
     # Parameter containing expected 404 response
     @pytest.mark.parametrize(
-        "mock_response", [{"status_code": 404, "json_data": {}}], indirect=True
+        "mock_response", [{"status_code": 404, "json": {}}], indirect=True
     )
     # 404: Error test
     def test_unsuccessful_solr_request(self, mock_response, core, common_params):
@@ -201,7 +201,7 @@ class TestSolrRequest:
 
     # Parameter containing expected 404 response
     @pytest.mark.parametrize(
-        "mock_response", [{"status_code": 404, "json_data": {}}], indirect=True
+        "mock_response", [{"status_code": 404, "json": {}}], indirect=True
     )
     def test_unsuccessful_facet_request(self, mock_response, core, facet_params):
        
