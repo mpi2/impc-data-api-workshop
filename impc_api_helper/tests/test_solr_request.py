@@ -101,7 +101,7 @@ class TestSolrRequest:
         "mock_response", [{"status_code": 404, "json": {}}], indirect=True
     )
     # 404: Error test
-    def test_unsuccessful_solr_request(self, mock_response, core, common_params):
+    def test_unsuccessful_solr_request(self, mock_response, core, common_params, capsys):
         """Tests an unsuccessful request to the Solr API with status_code 404.
 
         Args:
@@ -109,16 +109,18 @@ class TestSolrRequest:
             The parameters passed above are its contents
         """
 
+        # Call function
+        result = solr_request(core=core, params=common_params)
+
         # Capture stdout
-        captured_output = io.StringIO()
-        with redirect_stdout(captured_output):
-            result = solr_request(core=core, params=common_params)
+        captured = capsys.readouterr()
 
         # Assert results
         assert result is None
+        assert "Error" in captured.out
         
         # Check if "Error" was printed to console
-        assert "Error" in captured_output.getvalue()
+        # assert "Error" in captured_output.getvalue()
 
         # Verify that the mock was called
         mock_response.assert_called_once()
@@ -203,18 +205,17 @@ class TestSolrRequest:
     @pytest.mark.parametrize(
         "mock_response", [{"status_code": 404, "json": {}}], indirect=True
     )
-    def test_unsuccessful_facet_request(self, mock_response, core, facet_params):
+    def test_unsuccessful_facet_request(self, mock_response, core, facet_params, capsys):
        
+        # Call function
+        result = solr_request(core=core, params=facet_params)
+
         # Capture stdout
-        captured_output = io.StringIO()
-        with redirect_stdout(captured_output):
-            result = solr_request(core=core, params=facet_params)
+        captured = capsys.readouterr()
 
         # Assert results
         assert result is None
-
-        # Check if "Error" was printed to console
-        assert "Error" in captured_output.getvalue()
+        assert "Error" in captured.out
 
         # Verify that the mock was called
         mock_response.assert_called_once()
