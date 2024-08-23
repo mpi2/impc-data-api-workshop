@@ -100,6 +100,7 @@ def solr_request(core, params, silent=False):
 
 def _process_faceting(data, params):
     """Processes the faceting data from an API response.
+    Note: This function should not be used alone but only as a helper function for solr_request().
 
     Args:
         data (dict): The JSON response from the API containing faceting information.
@@ -107,14 +108,6 @@ def _process_faceting(data, params):
 
     Returns:
         pandas.DataFrame: A DataFrame with the facet field values and their corresponding counts.
-
-    Example usage:
-        df = process_faceting(
-            data=response.requests.get(solr_url, params=params).json(),
-            params={
-                'q': '*:*',  # Your query, '*' retrieves all documents.
-            }
-        )
     """
 
     # Extract and add faceting query results to the list.
