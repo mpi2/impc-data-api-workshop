@@ -67,7 +67,7 @@ def batch_solr_request(core, params, download=False, batch_size=5000, path_to_do
             case "n" | "exit":
                 print("Exiting gracefully")
                 exit()
-            case "y":
+            case "y" | '':
                 print("Fetching data...")
                 return _batch_to_df(core, params, num_results)
 
