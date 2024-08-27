@@ -5,6 +5,7 @@ import requests
 from tqdm import tqdm
 from solr_request import solr_request
 import logging
+from pathlib import Path
 
 # Set logger
 logger = logging.getLogger(__name__)
@@ -13,7 +14,7 @@ FORMAT = "%(levelname)s: %(asctime)s  - %(message)s"
 logging.basicConfig(format=FORMAT, datefmt='%Y-%m-%d %H:%M:%S')
 
 
-def batch_solr_request(core, params, download=False, batch_size=5000):
+def batch_solr_request(core, params, download=False, batch_size=5000, path_to_download='./'):
     # Set params for batch request
     params["start"] = 0  # Start at the first result
     params["rows"] = batch_size  # Fetch results in chunks of 5000
@@ -47,7 +48,7 @@ def batch_solr_request(core, params, download=False, batch_size=5000):
     # If user decides to download, a generator is used to fetch data in batches without storing results in memory.
     if download:
         # Implement loop behaviour
-        filename = f"{core}.{params['wt']}"
+        filename = Path(path_to_download) / f"{core}.{params['wt']}"
         gen = _batch_solr_generator(core, params, num_results)
         _solr_downloader(params, filename, gen)
         logger.warning("Showing the first batch of results only. See downloaded file for the whole data.")
