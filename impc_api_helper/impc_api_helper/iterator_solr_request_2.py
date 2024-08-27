@@ -7,13 +7,6 @@ from solr_request import solr_request
 import logging
 from pathlib import Path
 
-# Set logger
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARNING)
-FORMAT = "%(levelname)s: %(asctime)s  - %(message)s"
-logging.basicConfig(format=FORMAT, datefmt='%Y-%m-%d %H:%M:%S')
-
-
 def batch_solr_request(core, params, download=False, batch_size=5000, path_to_download='./'):
     # Set params for batch request
     params["start"] = 0  # Start at the first result
@@ -51,7 +44,7 @@ def batch_solr_request(core, params, download=False, batch_size=5000, path_to_do
         filename = Path(path_to_download) / f"{core}.{params['wt']}"
         gen = _batch_solr_generator(core, params, num_results)
         _solr_downloader(params, filename, gen)
-        logger.warning("Showing the first batch of results only. See downloaded file for the whole data.")
+        print("Showing the first batch of results only. See downloaded file for the whole data.")
         match params["wt"]:
             case "json":
                 return pd.read_json(filename, nrows=batch_size, lines=True)
@@ -64,7 +57,7 @@ def batch_solr_request(core, params, download=False, batch_size=5000, path_to_do
 
     # If it's too big, warn the user and ask if they want to proceed.
     else:
-        logger.warning(
+        print(
             "Your request might exceed the available memory. We suggest setting 'download=True' and reading the file in batches"
         )
         prompt = input(
