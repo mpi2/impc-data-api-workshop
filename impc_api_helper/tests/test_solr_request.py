@@ -19,10 +19,23 @@ class TestSolrRequest:
     def core(self):
         return "test_core"
 
+    # TODO: Make these two avialable to pass to each test
     # Fixture containing the params of a normal solr_request
     @pytest.fixture
     def common_params(self):
-        return {"q": "*:*", "rows": 4, "wt": "json"}
+        return {"q": "*:*", "rows": 0, "wt": "json"}
+
+    # Params for a facet request
+    @pytest.fixture
+    def facet_params(self):
+        return {
+            "q": "*:*",
+            "rows": 0,
+            "facet": "on",
+            "facet.field": "colour",
+            "facet.limit": 3,
+            "facet.mincount": 1,
+        }
 
     # Create a response fixture with modifiable status code and response content
     @pytest.fixture
@@ -44,28 +57,72 @@ class TestSolrRequest:
             yield mock_get
 
     # Parameter containing a successful mock response
+    # Tests regular and facet
+
+    # Takes 3 parameters :
+    # params: params we send to the request
+    # mock_response: the mock response we expected to be returned
+    # case: request(facet or regular)
+
+    # TODO: adjust parameters to take previously made fixtures and make it readable
     @pytest.mark.parametrize(
-        "mock_response",
+        "case,params,mock_response",
         [
-            {
-                "status_code": 200,
-                "json": {
-                    "response": {
-                        "numFound": 67619,
-                        "start": 0,
-                        "docs": [
-                            {"id": 1978, "name": "Toto"},
-                            {"id": 1979, "name": "Hydra"},
-                        ],
-                    }
+            (
+                "regular",
+                {"q": "*:*", "rows": 0, "wt": "json"},
+                {
+                    "status_code": 200,
+                    "json": {
+                        "response": {
+                            "numFound": 67619,
+                            "docs": [
+                                {"id": 1978, "name": "Toto"},
+                                {"id": 1979, "name": "Hydra"},
+                            ],
+                        }
+                    },
                 },
-            }
+            ),
+            (
+                "facet",
+                {
+                    "q": "*:*",
+                    "rows": 0,
+                    "facet": "on",
+                    "facet.field": "colour",
+                    "facet.limit": 3,
+                    "facet.mincount": 1,
+                },
+                {
+                    "status_code": 200,
+                    "json": {
+                        "response": {
+                            "numFound": 1961,
+                            "docs": [],
+                        },
+                        "facet_counts": {
+                            "facet_queries": {},
+                            "facet_fields": {
+                                "colour": [
+                                    "red",
+                                    1954,
+                                    "blue",
+                                    1963,
+                                    "black",
+                                    1984,
+                                ]
+                            },
+                        },
+                    },
+                },
+            ),
         ],
-        indirect=True,
+        indirect=["mock_response"],
     )
 
     # 200: Successful test
-    def test_successful_solr_request(self, mock_response, core, common_params):
+    def test_successful_solr_request(self, core, mock_response, params, case):
         """Tests a successful request to the Solr API
 
         Args:
@@ -74,15 +131,27 @@ class TestSolrRequest:
         """
 
         # Call function
-        num_found, df = solr_request(core=core, params=common_params)
+        num_found, df = solr_request(core=core, params=params)
 
-        # Assert results
-        assert num_found == 67619
-        assert df.shape == (2, 2)
-        assert df.iloc[0, 0] == 1978
-        assert df.iloc[0, 1] == "Toto"
-        assert df.iloc[1, 0] == 1979
-        assert df.iloc[1, 1] == "Hydra"
+        if case == "regular":
+            # Assert results
+            assert num_found == 67619
+            assert df.shape == (2, 2)
+            assert df.iloc[0, 0] == 1978
+            assert df.iloc[0, 1] == "Toto"
+            assert df.iloc[1, 0] == 1979
+            assert df.iloc[1, 1] == "Hydra"
+
+        elif case == "facet":
+            # Assert results
+            assert num_found == 1961
+            assert df.shape == (3, 2)
+            assert df.iloc[0, 0] == "red"
+            assert df.iloc[0, 1] == 1954
+            assert df.iloc[1, 0] == "blue"
+            assert df.iloc[1, 1] == 1963
+            assert df.iloc[2, 0] == "black"
+            assert df.iloc[2, 1] == 1984
 
         # Verify that the mock was called
         mock_response.assert_called_once()
@@ -92,16 +161,51 @@ class TestSolrRequest:
 
         # Check the URL and parameters
         # Checks the url and params called are as expected.
-        check_url_and_params(
-            mock_response, expected_core=core, expected_params=common_params
-        )
+        check_url_and_params(mock_response, expected_core=core, expected_params=params)
 
     # Parameter containing expected 404 response
+    # Tests regular and facet failures
     @pytest.mark.parametrize(
-        "mock_response", [{"status_code": 404, "json": {}}], indirect=True
+        "case,params,mock_response",
+        [
+            (
+                "regular",
+                {"q": "*:*", "rows": 0, "wt": "json"},
+                {
+                    "status_code": 404,
+                    "json": {"response": {"numFound": 0, "start": 0, "docs": []}},
+                },
+            ),
+            (
+                "facet",
+                {
+                    "q": "*:*",
+                    "rows": 0,
+                    "facet": "on",
+                    "facet.field": "colour",
+                    "facet.limit": 3,
+                    "facet.mincount": 1,
+                },
+                {
+                    "status_code": 404,
+                    "json": {
+                        "response": {
+                            "numFound": 0,
+                            "docs": [],
+                        },
+                        "facet_counts": {
+                            "facet_queries": {},
+                            "facet_fields": {"colour": []},
+                        },
+                    },
+                },
+            ),
+        ],
+        indirect=["mock_response"],
     )
+    # @pytest.mark.skip(reason="Cannot test right now")
     # 404: Error test
-    def test_unsuccessful_solr_request(self, mock_response, core, common_params, capsys):
+    def test_unsuccessful_solr_request(self, mock_response, core, params, case, capsys):
         """Tests an unsuccessful request to the Solr API with status_code 404.
 
         Args:
@@ -110,7 +214,7 @@ class TestSolrRequest:
         """
 
         # Call function
-        result = solr_request(core=core, params=common_params)
+        result = solr_request(core=core, params=params)
 
         # Capture stdout
         captured = capsys.readouterr()
@@ -118,7 +222,7 @@ class TestSolrRequest:
         # Assert results
         assert result is None
         assert "Error" in captured.out
-        
+
         # Check if "Error" was printed to console
         # assert "Error" in captured_output.getvalue()
 
@@ -131,100 +235,5 @@ class TestSolrRequest:
         # Check the URL and parameters
         # Checks the url and params called are as expected.
         check_url_and_params(
-            mock_response, expected_core=core, expected_params=common_params
-        )
-
-    # Test for the facet request
-    # Params for a facet request
-    @pytest.fixture
-    def facet_params(self):
-        return {
-            "q": "*:*",
-            "rows": 0,
-            "facet": "on",
-            "facet.field": "colour",
-            "facet.limit": 3,
-            "facet.mincount": 1,
-        }
-
-    # Parameter containing a facet request response
-    @pytest.mark.parametrize(
-        "mock_response",
-        [
-            {
-                "status_code": 200,
-                "json": {
-                    "response": {
-                        "numFound": 1961,
-                        "docs": [],
-                    },
-                    "facet_counts": {
-                        "facet_queries": {},
-                        "facet_fields": {
-                            "colour": [
-                                "red",
-                                1954,
-                                "blue",
-                                1963,
-                                "black",
-                                1984,
-                            ]
-                        },
-                    },
-                },
-            }
-        ],
-        indirect=True,
-    )
-    def test_successful_facet_request(self, mock_response, core, facet_params):
-        # Call the function on facetmode
-        num_found, df = solr_request(core=core, params=facet_params)
-
-        # Assert results
-        assert num_found == 1961
-        assert df.shape == (3, 2)
-        assert df.iloc[0, 0] == "red"
-        assert df.iloc[0, 1] == 1954
-        assert df.iloc[1, 0] == "blue"
-        assert df.iloc[1, 1] == 1963
-        assert df.iloc[2, 0] == "black"
-        assert df.iloc[2, 1] == 1984
-
-        # Verify that the mock was called
-        mock_response.assert_called_once()
-
-        # Check the status code
-        assert mock_response.return_value.status_code == 200
-
-        # Checks the url and params called are as expected.
-        check_url_and_params(
-            mock_response, expected_core=core, expected_params=facet_params
-        )
-
-    # Parameter containing expected 404 response
-    @pytest.mark.parametrize(
-        "mock_response", [{"status_code": 404, "json": {}}], indirect=True
-    )
-    def test_unsuccessful_facet_request(self, mock_response, core, facet_params, capsys):
-       
-        # Call function
-        result = solr_request(core=core, params=facet_params)
-
-        # Capture stdout
-        captured = capsys.readouterr()
-
-        # Assert results
-        assert result is None
-        assert "Error" in captured.out
-
-        # Verify that the mock was called
-        mock_response.assert_called_once()
-
-        # Check the status code
-        assert mock_response.return_value.status_code == 404
-
-        # Check the URL and parameters
-        # Checks the url and params called are as expected.
-        check_url_and_params(
-            mock_response, expected_core=core, expected_params=facet_params
+            mock_response, expected_core=core, expected_params=params
         )
