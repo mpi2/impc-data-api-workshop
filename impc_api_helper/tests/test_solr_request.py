@@ -3,7 +3,7 @@ from unittest.mock import patch
 from solr_request import solr_request
 import io
 from contextlib import redirect_stdout
-from .test_helpers import check_url_and_params
+from .test_helpers import check_url_status_code_and_params
 
 
 class TestSolrRequest:
@@ -153,15 +153,9 @@ class TestSolrRequest:
             assert df.iloc[2, 0] == "black"
             assert df.iloc[2, 1] == 1984
 
-        # Verify that the mock was called
-        mock_response.assert_called_once()
+        # Checks the url, status code, and params called are as expected.
+        check_url_status_code_and_params(mock_response, expected_status_code=200, expected_core=core, expected_params=params)
 
-        # Check the status code
-        assert mock_response.return_value.status_code == 200
-
-        # Check the URL and parameters
-        # Checks the url and params called are as expected.
-        check_url_and_params(mock_response, expected_core=core, expected_params=params)
 
     # Parameter containing expected 404 response
     # Tests regular and facet failures
@@ -226,14 +220,7 @@ class TestSolrRequest:
         # Check if "Error" was printed to console
         # assert "Error" in captured_output.getvalue()
 
-        # Verify that the mock was called
-        mock_response.assert_called_once()
-
-        # Check the status code
-        assert mock_response.return_value.status_code == 404
-
-        # Check the URL and parameters
-        # Checks the url and params called are as expected.
-        check_url_and_params(
-            mock_response, expected_core=core, expected_params=params
+        # Checks the url, status code, and params called are as expected.
+        check_url_status_code_and_params(
+            mock_response, expected_status_code=404, expected_core=core, expected_params=params
         )
