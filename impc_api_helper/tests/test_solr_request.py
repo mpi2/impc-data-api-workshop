@@ -1,8 +1,6 @@
 import pytest
 from unittest.mock import patch
 from solr_request import solr_request
-import io
-from contextlib import redirect_stdout
 from .test_helpers import check_url_status_code_and_params
 
 
@@ -216,9 +214,6 @@ class TestSolrRequest:
         # Assert results
         assert result is None
         assert "Error" in captured.out
-
-        # Check if "Error" was printed to console
-        # assert "Error" in captured_output.getvalue()
 
         # Checks the url, status code, and params called are as expected.
         check_url_status_code_and_params(
