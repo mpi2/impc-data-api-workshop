@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch
-from solr_request import solr_request
+from solr_request import solr_request, _process_faceting
 from .test_helpers import check_url_status_code_and_params
 
 
@@ -226,3 +226,70 @@ class TestSolrRequest:
             expected_core=core,
             expected_params=params,
         )
+
+    # TODO: This might not need parametrized params, consider using a fixture
+    @pytest.mark.parametrize(
+        "params,data",
+        [
+            (
+                {
+                    "q": "*:*",
+                    "rows": 0,
+                    "facet": "on",
+                    "facet.field": "fruits",
+                    "facet.limit": 3,
+                    "facet.mincount": 1,
+                },
+                {
+                    "responseHeader": {
+                        "status": 0,
+                        "QTime": 4,
+                        "params": {
+                            "q": "*:*",
+                            "facet.limit": "15",
+                            "facet.field": "fruits",
+                            "facet.mincount": "1",
+                            "rows": "0",
+                            "facet": "on",
+                        },
+                    },
+                    "response": {"numFound": 67619, "start": 0, "docs": []},
+                    "facet_counts": {
+                        "facet_queries": {},
+                        "facet_fields": {
+                            "fruits": [
+                                "apple",
+                                15,
+                                "pineapple",
+                                9,
+                                "banana",
+                                24,
+                            ]
+                        },
+                    },
+                },
+            )
+        ],
+        indirect=False,
+    )
+    def test_process_faceting(self, params, data):
+        """Base test for helper function _process_faceting. 
+
+        Args:
+            params (dict): Params for a solr_request with facet params
+            data (dict): JSON like data returned from a solr_request with facet params
+        """
+        # Call _process_faceting function
+        df = _process_faceting(data, params)
+
+        # Assert results
+        assert df.shape == (3, 2)
+        assert df.columns.to_list() == ['fruits', "count_per_category"]
+        assert df.iloc[0, 0] == "apple"
+        assert df.iloc[0, 1] == 15
+        assert df.iloc[1, 0] == "pineapple"
+        assert df.iloc[1, 1] == 9
+        assert df.iloc[2, 0] == "banana"
+        assert df.iloc[2, 1] == 24
+
+
