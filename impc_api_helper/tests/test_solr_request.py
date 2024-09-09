@@ -17,7 +17,6 @@ class TestSolrRequest:
     def core(self):
         return "test_core"
 
-    # TODO: Make these two avialable to pass to each test
     # Fixture containing the params of a normal solr_request
     @pytest.fixture
     def common_params(self):
@@ -61,8 +60,6 @@ class TestSolrRequest:
     # params: params we send to the request
     # mock_response: the mock response we expected to be returned
     # case: request(facet or regular)
-
-    # TODO: adjust parameters to take previously made fixtures and make it readable
     @pytest.mark.parametrize(
         "case,params,mock_response",
         [
@@ -199,7 +196,6 @@ class TestSolrRequest:
         ],
         indirect=["mock_response"],
     )
-    # @pytest.mark.skip(reason="Cannot test right now")
     # 404: Error test
     def test_unsuccessful_solr_request(self, mock_response, core, params, case, capsys):
         """Tests an unsuccessful request to the Solr API with status_code 404.
@@ -227,7 +223,6 @@ class TestSolrRequest:
             expected_params=params,
         )
 
-    # TODO: This might not need parametrized params, consider using a fixture
     @pytest.mark.parametrize(
         "params,data",
         [
@@ -273,7 +268,7 @@ class TestSolrRequest:
         indirect=False,
     )
     def test_process_faceting(self, params, data):
-        """Base test for helper function _process_faceting. 
+        """Base test for helper function _process_faceting.
 
         Args:
             params (dict): Params for a solr_request with facet params
@@ -284,12 +279,10 @@ class TestSolrRequest:
 
         # Assert results
         assert df.shape == (3, 2)
-        assert df.columns.to_list() == ['fruits', "count_per_category"]
+        assert df.columns.to_list() == ["fruits", "count_per_category"]
         assert df.iloc[0, 0] == "apple"
         assert df.iloc[0, 1] == 15
         assert df.iloc[1, 0] == "pineapple"
         assert df.iloc[1, 1] == 9
         assert df.iloc[2, 0] == "banana"
         assert df.iloc[2, 1] == 24
-
-
