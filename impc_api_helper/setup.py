@@ -10,8 +10,14 @@ setup(
     install_requires=[
         'pandas>=2.2.0',
         'requests>=2.31.0',
-        'tqdm>=4.66.4'
+        'tqdm>=4.66.4',
     ],
+
+    extras_require={
+        'dev': [
+            'pytest>=8.2.2',
+        ],
+    },
     # classifiers=[
     #     'Development Status :: 3 - Alpha',
     #     'Intended Audience :: IMPC data users',

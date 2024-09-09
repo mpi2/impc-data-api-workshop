@@ -16,8 +16,15 @@ dependencies = [
     "requests>=2.31.0",
     "tqdm>=4.66.4"
 ]
+
 readme = "README.md"
 requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.2"
+]
+
 
 [project.urls]
 "Homepage" = "https://github.com/mpi2/impc-data-api-workshop"

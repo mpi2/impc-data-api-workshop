@@ -1,5 +1,4 @@
 
-
 # Byte-compiled 
 __pycache__/
 
@@ -10,4 +9,6 @@ dist/
 *.egg
 
 # Pytest
-*.pytest
+*.pytest*
+*.pytest_cache
+__pycache__
