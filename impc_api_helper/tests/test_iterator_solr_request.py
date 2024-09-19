@@ -135,10 +135,9 @@ class TestBatchSolrRequest():
         # We patch solr_request to get the number of docs
         result = batch_solr_request(core, params=params_format, download=True, path_to_download=temp_dir)
         num_found = mock_solr_request.return_value[0]
-        # TODO: Check batch_solr_generator gets called at least twice with increasing start
 
         # Check _batch_solr_generator gets called once with correct args
-        mock_batch_solr_generator.assert_called_with(core, params_format, num_found)
+        mock_batch_solr_generator.assert_called_once_with(core, params_format, num_found)
         
         # Check _solr_downloader gets called once with correct args
         mock_solr_downloader.assert_called_once_with(params_format, temp_file, mock_batch_solr_generator.return_value)
