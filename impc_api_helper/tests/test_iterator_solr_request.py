@@ -4,6 +4,13 @@ from unittest.mock import patch, call
 from impc_api_helper.iterator_solr_request_2 import batch_solr_request, _batch_solr_generator, solr_request, _batch_to_df
 import io
 import pandas as pd
+from pandas.testing import assert_frame_equal
+
+
+# Fixture containing the core
+@pytest.fixture
+def core():
+    return 'test_core'
 
 class TestBatchSolrRequest():
 
@@ -11,11 +18,6 @@ class TestBatchSolrRequest():
     @pytest.fixture
     def common_params(self):
         return {"start": 0, "rows": 10000, "wt": "json"}
-    
-    # Fixture containing the core
-    @pytest.fixture
-    def core(self):
-        return 'test_core'
     
     # Fixture containing the solr_request function mock
     # We will be mocking solr_request with different numbers of numFound, therefore it is passed as param
@@ -157,13 +159,6 @@ class TestBatchSolrRequest():
         assert result.loc[1,'city'] == 'Prague'
         
 
-        
-
-
-    # TODO:
-# _batch_to_df. 
-
-
     # Mock params
     @pytest.fixture
     def multiple_field_params(self):
@@ -228,9 +223,82 @@ class TestBatchSolrRequest():
             # Check _batch_to_df was called with correct params
             mock_batch_to_df.assert_called_once_with(core, multiple_field_params, num_found)
 
+# Have helper functions in a different class to separate fixtures and parameters
+class TestHelpersSolrBatchRequest():
+    # Define a generator to produce DF's dynamically
+    def dataframe_generator(self):
+        """ Generator to produce dataframes dynamically (row by row)/
+
+        Yields:
+            pd.DataFrame: Dataframe with one row of data
+        """
+        # Values for the dataframes
+        animals = ['Bull', 'Elephant', 'Rhino', 'Monkey', 'Snake']
+        # Construct the dataframe and yield it
+        for i, a in enumerate(animals): 
+            yield pd.DataFrame(
+               {
+                    'id': [i],
+                    'animal': [a]
+                }
+            )
+        
+    # Fixture containing the solr_request function mock
+    # Num_found is passed dynamically as params in the test
+    # The DF is returned dynamically using the generator
+    @pytest.fixture
+    def mock_solr_request_generator(self, request):
+        """ Patches solr_request for _batch_to_df _batch_solr_generator producing a df dynamically.
+            Creates a df in chunks (row by row) mocking incoming batches of responses. 
+        """
+        with patch('impc_api_helper.iterator_solr_request_2.solr_request') as mock:
+            df_generator = self.dataframe_generator()
+            def side_effect(*args, **kwargs):
+                df = next(df_generator)
+                return request.param, df
+            mock.side_effect = side_effect
+            yield mock
+
+     # Fixture containing the params of a normal batch_solr_request
+    @pytest.fixture
+    def batch_params(self, rows):
+        return {"start": 0, "rows": rows, "wt": "json"}
+    
+    @pytest.fixture
+    def num_found(self, request):
+        return request.param
+
+    # Parameters to be passsed to the test: the num_found for mock_solr_request_generator, the num_found separately, and rows (batch_size).
+    # Note num_found is returned by solr_request, when we access it using the generator function, it causes issues.
+    # Hence, we pass num_found separately as a fixture. 
+    @pytest.mark.parametrize("mock_solr_request_generator,num_found,rows", [
+        (50000, 50000, 10000),
+        (5, 5, 1),
+        (25000, 25000, 5000)
+                                                                            ],
+        indirect=['mock_solr_request_generator'])
+    
+    def test_batch_to_df(self, core, batch_params, num_found, mock_solr_request_generator, rows):
+        # Call the tested function
+        df = _batch_to_df(core, batch_params, num_found)
+
+        # Assert solr_request was called with the expected params and increasing start 
+        expected_calls = [
+            call(core=core, params={**batch_params, 'start': i * rows, 'rows': rows}, silent=True) for i in range(5)
+        ]
+        mock_solr_request_generator.assert_has_calls(expected_calls)
+
+        # Assert the structure of the final df 
+        assert_frame_equal(df, pd.DataFrame(
+            {
+                'id': [0, 1, 2, 3, 4],
+                'animal': ['Bull', 'Elephant', 'Rhino', 'Monkey', 'Snake']
+            }
+        ).reset_index(drop=True))
+
+        
 
 
-
-
-
-
+    # TODO:
+    # _batch_solr_generator
+    # _solr_downloader
