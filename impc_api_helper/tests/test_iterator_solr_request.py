@@ -227,36 +227,44 @@ class TestBatchSolrRequest():
 # Have helper functions in a different class to separate fixtures and parameters
 class TestHelpersSolrBatchRequest():
     # Define a generator to produce DF's dynamically
-    def dataframe_generator(self):
-        """ Generator to produce dataframes dynamically (row by row)/
+    def data_generator(self):
+        """ Generator to produce data dynamically (row by row or doc by doc)/
 
         Yields:
-            pd.DataFrame: Dataframe with one row of data
+            Tuple: tuple containing an id number and a value
         """
         # Values for the dataframes
         animals = ['Bull', 'Elephant', 'Rhino', 'Monkey', 'Snake']
-        # Construct the dataframe and yield it
-        for i, a in enumerate(animals): 
-            yield pd.DataFrame(
-               {
-                    'id': [i],
-                    'animal': [a]
-                }
-            )
+        # Yield a tuple containing an id number and an animal string
+        for i, a in enumerate(animals):
+            yield (i, a)
         
     # Fixture containing the solr_request function mock
     # Num_found is passed dynamically as params in the test
-    # The DF is returned dynamically using the generator
+    # Generates df's dynamically using the data generator
     @pytest.fixture
     def mock_solr_request_generator(self, request):
         """ Patches solr_request for _batch_to_df _batch_solr_generator producing a df dynamically.
             Creates a df in chunks (row by row) mocking incoming batches of responses. 
         """
         with patch('impc_api_helper.iterator_solr_request_2.solr_request') as mock:
-            df_generator = self.dataframe_generator()
+            
+            # Call the generator
+            data_generator = self.data_generator()
+
+            # Use the side_effects to return num_found and the dfs
             def side_effect(*args, **kwargs):
-                df = next(df_generator)
+                # Get the tuple from the data generator
+                idx, animal = next(data_generator)
+                # Create a df
+                df = pd.DataFrame(
+                    {
+                        'id': [idx],
+                        'animal': [animal]
+                    }
+                )
                 return request.param, df
+                
             mock.side_effect = side_effect
             yield mock
 
