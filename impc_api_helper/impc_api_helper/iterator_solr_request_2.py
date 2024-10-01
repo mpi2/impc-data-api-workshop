@@ -130,10 +130,21 @@ def _batch_solr_generator(core, params, num_results):
 # File writer
 def _solr_downloader(params, filename, solr_generator):
     with open(filename, "w", encoding="UTF-8") as f:
-        for chunk in solr_generator:
-            if params.get("wt") == "json":
+        
+        if params.get("wt") == "json":
+            f.write("[\n")
+            first_item = True
+
+            for chunk in solr_generator:
+                # print('CHUNK',chunk,'\n')
                 for item in chunk:
-                    json.dump(item, f)
-                    f.write("\n")
-            else:
+                    if not first_item:
+                        f.write(",\n")
+                    # print('ITEM',item)
+                    json.dump(item, f, ensure_ascii=False)
+                    first_item = False
+            f.write("\n]\n")
+
+        else:
+            for chunk in solr_generator:
                 f.write(chunk)

@@ -1,8 +1,6 @@
 import pytest
 from pathlib import Path
-from unittest.mock import patch, call, MagicMock
-from impc_api_helper.iterator_solr_request_2 import batch_solr_request, _batch_solr_generator, solr_request, _batch_to_df
-import io
+import json
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from .test_helpers import check_url_status_code_and_params
@@ -417,3 +415,61 @@ class TestHelpersSolrBatchRequest():
 
     # TODO:
     # _solr_downloader
+
+    @pytest.fixture
+    def mock_solr_generator(self, request):
+        format = request.param
+        if format == "json":
+            def data_chunks():
+                chunk_1 = [{"id": idx, "name": number} for idx, number in enumerate(range(0, 3))]
+                chunk_2 = [{"id": idx, "name": number} for idx, number in enumerate(range(100, 97, -1))]
+
+                yield chunk_1
+                yield chunk_2
+            yield data_chunks()
+        # elif format == "csv":
+            # yield f"id,\n{animal}"
+    
+
+
+    @pytest.mark.parametrize(
+            "mock_solr_generator, expected_format", [("json", "json")], indirect=["mock_solr_generator"]
+    )
+    def test_solr_downloader(self, mock_solr_generator, batch_solr_generator_params, expected_format, tmp_path):
+        # 1. Test that it gets called with the correct params
+        # 1a. test the filename is appropriate (path + core)
+        # 2. Check it iterates correctly over a generator
+        # 3. If json: check it writes the expceted thing
+        # 4. If csv: check it writes the expected thing
+
+
+        # Need a generator to pass it data. We can use the data_generator
+        # A fixture that gives it the adequate data in json or csv format
+        # Call the function with some params, custom filename (from temp_path) and the genrator
+        # Check the file contains what is excpected (perhaps use parameters here)
+
+        solr_gen = mock_solr_generator
+        path = Path(tmp_path)
+        file = 'test.' + expected_format
+        test_file = path / file
+        # test_file = 'isaa.json'
+        _solr_downloader(params={**batch_solr_generator_params, "wt": expected_format},
+                        # filename= Path(tmp_path,'tmp_file'),
+                        filename=test_file,
+                        solr_generator=solr_gen)
+        
+        # TODO: Finish the CSV part
+
+        # Read the downloaded file and check it contains the expected data
+        if expected_format == 'json':
+            with open(test_file, 'r') as f:
+                content = json.load(f)
+
+            assert content == [
+                                {"id": 0, "name": 0},
+                                {"id": 1, "name": 1},
+                                {"id": 2, "name": 2},
+                                {"id": 0, "name": 100},
+                                {"id": 1, "name": 99},
+                                {"id": 2, "name": 98}
+                            ]
