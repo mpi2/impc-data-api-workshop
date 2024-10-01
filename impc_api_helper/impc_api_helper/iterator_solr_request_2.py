@@ -110,7 +110,7 @@ def _batch_solr_generator(core, params, num_results):
     batch_size = params["rows"]
 
     with tqdm(total=num_results) as pbar:
-        while start < num_results:
+        while start <= num_results:
             params["start"] = start
             response = requests.get(solr_url, params=params, timeout=10)
 
@@ -119,12 +119,18 @@ def _batch_solr_generator(core, params, num_results):
                     data = response.json()["response"]["docs"]
                 else:
                     data = response.text
+                
+                # Update and refresh the progress bar after getting the data
+                pbar.update(batch_size)
+                pbar.refresh()
                 yield data
+                
             else:
                 raise Exception(f"Request failed. Status code: {response.status_code}")
 
-            pbar.update(batch_size)
+            # pbar.update(batch_size)
             start += batch_size
+        print(f"Your request URL after the last call:{response.url}")
 
 
 # File writer
