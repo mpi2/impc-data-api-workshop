@@ -95,70 +95,84 @@ class TestBatchSolrRequest():
             assert "Exiting gracefully" in captured.out
             mock_batch_to_df.assert_not_called()
 
-
-
     # TEST DOWNLOAD TRUE
     # Fixture mocking the activity of _batch_solr_generator
     @pytest.fixture
     def mock_batch_solr_generator(self):
-        with patch('impc_api_helper.iterator_solr_request_2._batch_solr_generator') as mock:
+        with patch(
+            "impc_api_helper.iterator_solr_request_2._batch_solr_generator"
+        ) as mock:
             yield mock
 
     @pytest.fixture
     def mock_solr_downloader(self, tmp_path):
-        with patch('impc_api_helper.iterator_solr_request_2._solr_downloader') as mock:
-            temp_dir = Path(tmp_path) / 'temp_dir'
+        with patch("impc_api_helper.iterator_solr_request_2._solr_downloader") as mock:
+            temp_dir = Path(tmp_path) / "temp_dir"
             temp_dir.mkdir()
             yield mock
-
 
     # Mock response for test containing more than 2,000,000 docs
     @pytest.mark.parametrize("mock_solr_request", [2000000], indirect=True)
     # Parametrized decorator to simulate reading a json and csv files
     @pytest.mark.parametrize(
-        "params_format, format, file_content, expected_columns",
+        "params_format, format, file_content",
         [
-            ({"start": 0, "rows": 2000000, "wt": "json"},"json", '{"id": "1", "city": "Houston"}\n{"id": "2", "city": "Prague"}\n', ['id', 'city']),
-            ({"start": 0, "rows": 2000000, "wt": "csv"},"csv", 'id,city\n1,Houston\n2,Prague\n', ['id', 'city'])
-        ]
+            (
+                {"start": 0, "rows": 2000000, "wt": "json"},
+                "json",
+                '[{"id": "1", "city": "Houston"},{"id": "2", "city": "Prague"}]',
+            ),
+            (
+                {"start": 0, "rows": 2000000, "wt": "csv"},
+                "csv",
+                "id,city\n1,Houston\n2,Prague\n",
+            ),
+        ],
     )
-    # Test download = True
-    def test_batch_solr_request_download_true(self, core, capsys, mock_solr_request, mock_batch_solr_generator, mock_solr_downloader, tmp_path, common_params, params_format, format, file_content, expected_columns):
-
+    # This test should check the correct helper functions and print statements are called.
+    # Calling the API and writing the file are tested within the helpers. 
+    def test_batch_solr_request_download_true(
+        self,
+        core,
+        capsys,
+        mock_solr_request,
+        mock_batch_solr_generator,
+        mock_solr_downloader,
+        tmp_path,
+        params_format,
+        format,
+        file_content,
+    ):
         # Create temporary files for the test
-        temp_dir = tmp_path / 'temp_dir'
+        temp_dir = tmp_path / "temp_dir"
         filename = f"{core}.{format}"
         temp_file = temp_dir / filename
         temp_file.write_text(file_content)
-        
 
         # First we call the function
         # We patch solr_request to get the number of docs
-        result = batch_solr_request(core, params=params_format, download=True, path_to_download=temp_dir)
+        result = batch_solr_request(
+            core, params=params_format, download=True, path_to_download=temp_dir
+        )
         num_found = mock_solr_request.return_value[0]
 
         # Check _batch_solr_generator gets called once with correct args
-        mock_batch_solr_generator.assert_called_once_with(core, params_format, num_found)
-        
+        mock_batch_solr_generator.assert_called_once_with(
+            core, params_format, num_found
+        )
+
         # Check _solr_downloader gets called once with correct args
-        mock_solr_downloader.assert_called_once_with(params_format, temp_file, mock_batch_solr_generator.return_value)
+        mock_solr_downloader.assert_called_once_with(
+            params_format, temp_file, mock_batch_solr_generator.return_value
+        )
 
         # Check the print statements
         captured = capsys.readouterr()
         assert f"Number of found documents: {num_found}" in captured.out
-        assert "Showing the first batch of results only" in captured.out
+        assert f"File saved as: {temp_file}" in captured.out
 
-        # Check a pd was created and its contents
-        assert isinstance(result, pd.DataFrame)
-        assert len(result) == 2
-        assert list(result.columns) == expected_columns
-        assert result.loc[0,'id'] == 1
-        assert result.loc[0,'city'] == 'Houston'
-        assert result.loc[1,'id'] == 2
-        assert result.loc[1,'city'] == 'Prague'
-        
-
-    # Mock params
+        # Check the function returns None
+        assert result is None
     @pytest.fixture
     def multiple_field_params(self):
         return {

@@ -44,12 +44,8 @@ def batch_solr_request(core, params, download=False, batch_size=5000, path_to_do
         filename = Path(path_to_download) / f"{core}.{params['wt']}"
         gen = _batch_solr_generator(core, params, num_results)
         _solr_downloader(params, filename, gen)
-        print("Showing the first batch of results only. See downloaded file for the whole data.")
-        match params["wt"]:
-            case "json":
-                return pd.read_json(filename, nrows=batch_size, lines=True)
-            case "csv":
-                return pd.read_csv(filename, nrows=batch_size)
+        print(f"File saved as: {filename}")
+        return None
 
     # If the number of results is small enough and download is off, it's okay to show as df
     if num_results < 1000000 and not download:
