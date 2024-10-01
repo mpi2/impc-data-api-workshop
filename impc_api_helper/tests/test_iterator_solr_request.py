@@ -420,56 +420,90 @@ class TestHelpersSolrBatchRequest():
     def mock_solr_generator(self, request):
         format = request.param
         if format == "json":
+
             def data_chunks():
-                chunk_1 = [{"id": idx, "name": number} for idx, number in enumerate(range(0, 3))]
-                chunk_2 = [{"id": idx, "name": number} for idx, number in enumerate(range(100, 97, -1))]
+                chunk_1 = [
+                    {"id": idx, "number": number}
+                    for idx, number in enumerate(range(0, 3))
+                ]
+                chunk_2 = [
+                    {"id": idx, "number": number}
+                    for idx, number in enumerate(range(100, 97, -1), start=3)
+                ]
 
                 yield chunk_1
                 yield chunk_2
-            yield data_chunks()
-        # elif format == "csv":
-            # yield f"id,\n{animal}"
-    
 
+            yield data_chunks()
+        elif format == "csv":
+
+            def data_chunks():
+                chunk_1 = "id,number\n" + "\n".join(
+                    f"{idx},{number}" for idx, number in enumerate(range(0, 3))
+                )
+                chunk_2 = "id,number\n" + "\n".join(
+                    f"{idx},{number}"
+                    for idx, number in enumerate(range(100, 97, -1), start=3)
+                )
+
+                yield chunk_1
+                yield chunk_2
+
+            yield data_chunks()
 
     @pytest.mark.parametrize(
-            "mock_solr_generator, expected_format", [("json", "json")], indirect=["mock_solr_generator"]
+        "mock_solr_generator, expected_format",
+        [("json", "json"), ("csv", "csv")],
+        indirect=["mock_solr_generator"],
     )
-    def test_solr_downloader(self, mock_solr_generator, batch_solr_generator_params, expected_format, tmp_path):
-        # 1. Test that it gets called with the correct params
-        # 1a. test the filename is appropriate (path + core)
-        # 2. Check it iterates correctly over a generator
-        # 3. If json: check it writes the expceted thing
-        # 4. If csv: check it writes the expected thing
-
-
-        # Need a generator to pass it data. We can use the data_generator
-        # A fixture that gives it the adequate data in json or csv format
-        # Call the function with some params, custom filename (from temp_path) and the genrator
-        # Check the file contains what is excpected (perhaps use parameters here)
-
+    def test_solr_downloader(
+        self,
+        mock_solr_generator,
+        batch_solr_generator_params,
+        expected_format,
+        tmp_path,
+    ):
+        # Define the data generator and path to the temporary file to write
         solr_gen = mock_solr_generator
         path = Path(tmp_path)
-        file = 'test.' + expected_format
+        file = "test." + expected_format
         test_file = path / file
-        # test_file = 'isaa.json'
-        _solr_downloader(params={**batch_solr_generator_params, "wt": expected_format},
-                        # filename= Path(tmp_path,'tmp_file'),
-                        filename=test_file,
-                        solr_generator=solr_gen)
-        
-        # TODO: Finish the CSV part
 
-        # Read the downloaded file and check it contains the expected data
-        if expected_format == 'json':
-            with open(test_file, 'r') as f:
+        # Call the tested function
+        _solr_downloader(
+            params={**batch_solr_generator_params, "wt": expected_format},
+            filename=test_file,
+            solr_generator=solr_gen,
+        )
+
+        # Read the downloaded file and check it contains the expected data for json and csv.
+        with open(test_file, "r", encoding="UTF-8") as f:
+            if expected_format == "json":
                 content = json.load(f)
+                assert content == [
+                    {"id": 0, "number": 0},
+                    {"id": 1, "number": 1},
+                    {"id": 2, "number": 2},
+                    {"id": 3, "number": 100},
+                    {"id": 4, "number": 99},
+                    {"id": 5, "number": 98},
+                ]
+                # Check it loads into a pd.DataFrame
+                test_df = pd.read_json(test_file)
 
-            assert content == [
-                                {"id": 0, "name": 0},
-                                {"id": 1, "name": 1},
-                                {"id": 2, "name": 2},
-                                {"id": 0, "name": 100},
-                                {"id": 1, "name": 99},
-                                {"id": 2, "name": 98}
-                            ]
+            elif expected_format == "csv":
+                content = f.read()
+
+                assert content == "id,number\n0,0\n1,1\n2,2\n3,100\n4,99\n5,98\n"
+                test_df = pd.read_csv(test_file)
+
+            # Assert the structure of the final df
+            assert_frame_equal(
+                test_df,
+                pd.DataFrame(
+                    {
+                        "id": [0, 1, 2, 3, 4, 5],
+                        "number": [0, 1, 2, 100, 99, 98],
+                    }
+                ).reset_index(drop=True),
+            )
