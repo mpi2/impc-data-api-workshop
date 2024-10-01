@@ -351,116 +351,132 @@ class TestHelpersSolrBatchRequest():
 
         
     # Test _batch_solr_generator
-    # This function uses the requests module so we need to patch it
-    # Main outcomes: 
-        # The data is yielded back as json DONE
-        # The data is yielded back as text DONE
-        # The error raises and exception DONE 
-        # The requests module is called multiple times
-        # The start param is increased by batch_size
-        # The URL, and compount url should be checked.
-    
     # Fixture to mock the requests module
     @pytest.fixture
     def mock_requests_get(self, request):
-        with patch('impc_api_helper.iterator_solr_request_2.requests.get') as mock_get:
+        with patch("impc_api_helper.iterator_solr_request_2.requests.get") as mock_get:
             # Capture the format of the response
             wt = request.param["wt"]
             mock_get.return_value.format = wt
-           
+
             # Get the status code and
             mock_get.return_value.status_code = request.param["status_code"]
 
-             # Get "response" data according to format
-            if wt == "json":
-                mock_get.return_value.json.return_value = request.param["response"]
-            
-            elif wt == "csv":
-                mock_get.return_value.text = request.param["response"]
-            
+            # Call the generator
+            data_generator = self.data_generator()
+
+            # Use the side_effects to return num_found and the dfs
+            def side_effect(*args, **kwargs):
+                # Create a mock response object
+                mock_response = Mock()
+                mock_response.status_code = 200
+
+                # Get the tuple from the data generator
+                _, animal = next(data_generator)
+
+                # Create type of response
+                # if json
+                if wt == "json":
+                    mock_response.json.return_value = {
+                        "response": {"docs": [{"id": animal}]}
+                    }
+                # if csv
+                if wt == "csv":
+                    mock_response.text = f"id,\n{animal}"
+
+                return mock_response
+
+            # Assign the side effect
+            mock_get.side_effect = side_effect
+
             yield mock_get
+
 
     # Fixture containing the params for batch_solr_generator
     @pytest.fixture
     def batch_solr_generator_params(self):
-        return {"start": 0, "rows": 2}
+        return {"start": 0, "rows": 1}
+
     @pytest.mark.parametrize(
-        "mock_requests_get",
-        [ 
-            ({
-                "status_code": 200,
-                "response": {"response": {
-                    "docs": [
-                        {"id": "Gibson"},
-                        {"id": "Ibanez"},
-                        {"id": "Schecter"},
-                        {"id": "PRS"}
-                    ]            
-                }},
-                "wt": "json"
-            }),
-            ({
-                "status_code": 200,
-                "response": "id\nGibson\nIbanez\nSchecter\nPRS",
-                "wt": "csv"
-            })
+        "mock_requests_get,expected_results",
+        [
+            (
+                {"wt": "json", "status_code": 200},
+                [
+                    [{"id": "Bull"}],
+                    [{"id": "Elephant"}],
+                    [{"id": "Rhino"}],
+                    [{"id": "Monkey"}],
+                    [{"id": "Snake"}],
+                ],
+            ),
+            (
+                {"wt": "csv", "status_code": 200},
+                [
+                    "id,\nBull",
+                    "id,\nElephant",
+                    "id,\nRhino",
+                    "id,\nMonkey",
+                    "id,\nSnake",
+                ],
+            ),
         ],
-        indirect=['mock_requests_get']
+        indirect=["mock_requests_get"],
     )
-    def test_batch_solr_generator(self, core, batch_solr_generator_params, mock_requests_get):
-        
+    def test_batch_solr_generator(
+        self, core, batch_solr_generator_params, mock_requests_get, expected_results
+    ):
         # Define num_found
-        num_results = 4
+        num_results = 5
         # Define the wt and batch_size param for the test
         batch_solr_generator_params["wt"] = mock_requests_get.return_value.format
-        batch_solr_generator_params["rows"] = 1
+        rows = batch_solr_generator_params["rows"]
 
         # Create the generator
         result = _batch_solr_generator(core, batch_solr_generator_params, num_results)
 
-        # Assertions for json data
-        if batch_solr_generator_params["wt"] == "json":
-            assert next(result) == [
-                    {"id": "Gibson"},
-                    {"id": "Ibanez"},
-                    {"id": "Schecter"},
-                    {"id": "PRS"}
-            ]
-        # Assertions for csv
-        elif batch_solr_generator_params["wt"] == "csv":
-            assert next(result) == "id\nGibson\nIbanez\nSchecter\nPRS"
+        # # Assertions for json data
+        # if batch_solr_generator_params["wt"] == "json":
+        # Loop over the expected results and check corresponding calls
+        for idx, exp_result in enumerate(expected_results):
+            # Call the next iteration
 
-        # General assertions
-        # Checks the url, status code, and params called are as expected.
-        check_url_status_code_and_params(
-            mock_response=mock_requests_get,
-            expected_status_code=200,
-            expected_core=core,
-            expected_params=batch_solr_generator_params,
-        )
+            assert next(result) == exp_result
 
-    # Simpler approach to test when status code is 404
+            # Check requests.get was called with the correct url, params [especially, the 'start' param], and timeout.
+            mock_requests_get.assert_called_with(
+                "https://www.ebi.ac.uk/mi/impc/solr/test_core/select",
+                params={**batch_solr_generator_params, "start": idx, "rows": rows},
+                timeout=10,
+            )
+
+    # Simpler approach to test when status code is not 200
     @pytest.fixture
     def mock_requests_get_error(self, request):
-        with patch('impc_api_helper.iterator_solr_request_2.requests.get') as mock_get:
+        with patch("impc_api_helper.iterator_solr_request_2.requests.get") as mock_get:
             mock_get.return_value.status_code = request.param
             yield mock_get
 
-    # Set up test for _batch_solr_generator when status code is 404
-    @pytest.mark.parametrize("mock_requests_get_error", [404, 500], indirect=['mock_requests_get_error'])
-    def test_batch_solr_generator_error(self, core, batch_solr_generator_params, mock_requests_get_error):
+    # Set up test for _batch_solr_generator when status code is not 200
+    @pytest.mark.parametrize(
+        "mock_requests_get_error", [404, 500], indirect=["mock_requests_get_error"]
+    )
+    def test_batch_solr_generator_error(
+        self, core, batch_solr_generator_params, mock_requests_get_error
+    ):
         # Get status code:
         status_code = mock_requests_get_error.return_value.status_code
         # Call the generator and expect an exception to be raised
         # Note the num_found is passed but the number itself does not matter
         # Note list() is needed so that the generator is iterated otherwise exception is never reached.
-        with pytest.raises(Exception, match=f"Request failed. Status code: {status_code}"):
-            _ = list(_batch_solr_generator(core=core, params=batch_solr_generator_params, num_results=4))
-            
-
-
-    # TODO:
-    # _solr_downloader
+        with pytest.raises(
+            Exception, match=f"Request failed. Status code: {status_code}"
+        ):
+            _ = list(
+                _batch_solr_generator(
+                    core=core, params=batch_solr_generator_params, num_results=4
+                )
+            )
 
     @pytest.fixture
     def mock_solr_generator(self, request):
