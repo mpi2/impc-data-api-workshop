@@ -30,23 +30,25 @@ class TestBatchSolrRequest():
     # Pytest fixture mocking _batch_to_df
     @pytest.fixture
     def mock_batch_to_df(self):
-        with patch('impc_api_helper.iterator_solr_request_2._batch_to_df') as mock:
+        with patch("impc_api_helper.iterator_solr_request_2._batch_to_df") as mock:
+            # Mock expected return content of the _batch_to_df (pd.DataFrame)
+            mock.return_value = pd.DataFrame()
             yield mock
 
     # Parameters to determine the numFound of mock_solr_request
     @pytest.mark.parametrize("mock_solr_request", [10000], indirect=True)
-    def test_batch_solr_request_no_download_small_request(self, mock_solr_request, core, common_params, capsys, mock_batch_to_df):
-        
+    def test_batch_solr_request_no_download_small_request(
+        self, mock_solr_request, core, common_params, capsys, mock_batch_to_df
+    ):
         # Call your function that uses the mocked request
         # Set up mock_solr_request values
-        result = batch_solr_request(core, params=common_params, 
-                                    download=False)
-        
+        result = batch_solr_request(core, params=common_params, download=False)
+
         # # Assert the mock was called with the expected parameters (start = 0, rows = 0) despite calling other values.
         mock_solr_request.assert_called_with(
-        core=core, 
-        params={**common_params, "start": 0, "rows": 0, "wt": "json"}, 
-        silent=True
+            core=core,
+            params={**common_params, "start": 0, "rows": 0, "wt": "json"},
+            silent=True,
         )
 
         # Capture stoud
@@ -173,68 +175,98 @@ class TestBatchSolrRequest():
 
         # Check the function returns None
         assert result is None
+
+    # Mock params
     @pytest.fixture
     def multiple_field_params(self):
         return {
             "q": "*:*",
             "rows": 0,
             "start": 0,
-            "field_list":['"orange"','apple','*berry'],
+            "field_list": ['"orange"', "apple", "*berry"],
             "field_type": "fruits",
-            "wt":"json"
-
+            "wt": "json",
         }
-    # Mock response for test containing more than 2,000,000 docs
-    @pytest.mark.parametrize("mock_solr_request", [(2000000),(10000)], indirect=True)
 
+    # Mock response for test containing more than 2,000,000 docs
+    @pytest.mark.parametrize("mock_solr_request", [(2000000), (10000)], indirect=True)
     @pytest.mark.parametrize(
         "download_bool",
-        [
-            (True),
-            (False)
-        ],
+        [(True), (False)],
     )
-    # @pytest.mark.skip(reason="no way of currently testing this")
-    def test_batch_solr_request_multiple_fields(self, core, multiple_field_params, capsys, mock_solr_request, mock_batch_solr_generator, download_bool, monkeypatch, mock_batch_to_df, mock_solr_downloader, tmp_path):
-        #  This test should make sure the request is formatted properly. Regardless of going to downloads or to _batch_to_df
-        
+
+    def test_batch_solr_request_multiple_fields(
+        self,
+        core,
+        multiple_field_params,
+        capsys,
+        mock_solr_request,
+        mock_batch_solr_generator,
+        download_bool,
+        monkeypatch,
+        mock_batch_to_df,
+        mock_solr_downloader,
+        tmp_path,
+    ):
+        # This test should make sure the request is formatted properly. Regardless of going to downloads or to _batch_to_df
         # Get num_found
         num_found = mock_solr_request.return_value[0]
-        # In the case where download=False and numFound is > 1,000,001 we pass 'y' in this test case. 
+        # In the case where download=False and numFound is > 1,000,001 we pass 'y' in this test case.
         if not download_bool and num_found == 2000000:
-            monkeypatch.setattr('builtins.input', lambda _: 'y')
-        
+            monkeypatch.setattr("builtins.input", lambda _: "y")
+
         # Call test function
-        # If downloads create a temporary file and call with the path_to_download
+        # If download is True create a temporary file and call with the path_to_download
         if download_bool:
-            temp_dir = tmp_path / 'temp_dir'
+            temp_dir = tmp_path / "temp_dir"
             temp_file = temp_dir / f"{core}.json"
             temp_file.write_text('{"id": "1", "city": "Cape Town"}\n')
-            result = batch_solr_request(core, params=multiple_field_params, download=download_bool, path_to_download=temp_dir)
+            result = batch_solr_request(
+                core,
+                params=multiple_field_params,
+                download=download_bool,
+                path_to_download=temp_dir,
+            )
         else:
             # Otherwise, call without the path_to_download
-            result = batch_solr_request(core, params=multiple_field_params, download=download_bool)
-    
+            result = batch_solr_request(
+                core, params=multiple_field_params, download=download_bool
+            )
+
         # Check output which should be equal for both.
         captured = capsys.readouterr()
         assert f"Number of found documents: {num_found}" in captured.out
         assert 'Queried field: fruits:("orange" OR apple OR *berry)' in captured.out
 
-        # If download was true, check subsequent functions were executed 
+        # If download was true, check subsequent functions were executed
         if download_bool:
-            assert "Showing the first batch of results only" in captured.out
             # Check _batch_solr_generator gets called once with correct args
-            mock_batch_solr_generator.assert_called_with(core, multiple_field_params, num_found)
-            
+            mock_batch_solr_generator.assert_called_with(
+                core, multiple_field_params, num_found
+            )
+
             # Check _solr_downloader gets called once with correct args
-            mock_solr_downloader.assert_called_once_with(multiple_field_params, temp_file, mock_batch_solr_generator.return_value)
+            mock_solr_downloader.assert_called_once_with(
+                multiple_field_params, temp_file, mock_batch_solr_generator.return_value
+            )
+            # Check the function returns None
+            assert result is None
 
-
-        # Otherwise, use the 'y' input at the start of the test and make sure the required function is executed. 
+        # Otherwise, use the 'y' input at the start of the test and make sure the required function is executed.
         if not download_bool and num_found == 2000000:
-            assert "Your request might exceed the available memory. We suggest setting 'download=True' and reading the file in batches" in captured.out
+            assert (
+                "Your request might exceed the available memory. We suggest setting 'download=True' and reading the file in batches"
+                in captured.out
+            )
             # Check _batch_to_df was called with correct params
-            mock_batch_to_df.assert_called_once_with(core, multiple_field_params, num_found)
+            mock_batch_to_df.assert_called_once_with(
+                core, multiple_field_params, num_found
+            )
+
+            # Check the function returns a dataframe
+            assert result is not None
+            assert isinstance(result, pd.DataFrame) is True
+
 
 # Have helper functions in a different class to separate fixtures and parameters
 class TestHelpersSolrBatchRequest():
