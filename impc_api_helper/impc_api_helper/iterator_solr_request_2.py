@@ -133,18 +133,27 @@ def _solr_downloader(params, filename, solr_generator):
         
         if params.get("wt") == "json":
             f.write("[\n")
-            first_item = True
+            first_chunk = True
 
             for chunk in solr_generator:
                 # print('CHUNK',chunk,'\n')
                 for item in chunk:
-                    if not first_item:
+                    if not first_chunk:
                         f.write(",\n")
                     # print('ITEM',item)
                     json.dump(item, f, ensure_ascii=False)
-                    first_item = False
+                    first_chunk = False
             f.write("\n]\n")
 
-        else:
+        elif params.get("wt") == "csv":
+            first_chunk = True
             for chunk in solr_generator:
-                f.write(chunk)
+                lines = chunk.splitlines()
+                if first_chunk:
+                    # Write all lines in the first chunk
+                    f.write(chunk)
+                    first_chunk = False
+                else:
+                    # Skip the first line (header) in subsequent chunks
+                    f.write('\n' + '\n'.join(lines[1:]) + '\n')
+
