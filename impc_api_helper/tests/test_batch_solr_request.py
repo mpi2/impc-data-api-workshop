@@ -11,7 +11,6 @@ from impc_api_helper.batch_solr_request import (
 import json
 import pandas as pd
 from pandas.testing import assert_frame_equal
-from .test_helpers import check_url_status_code_and_params
 
 
 # Fixture containing the core
@@ -26,16 +25,16 @@ class TestBatchSolrRequest:
     def common_params(self):
         return {"start": 0, "rows": 10000, "wt": "json"}
 
-    # Fixture containing the solr_request function mock
-    # We will be mocking solr_request with different numbers of numFound, therefore it is passed as param
+    # Fixture mocking solr_request within the batch_solr_request module.
+    # solr_request will be mocked with different values for numFound, therefore it is passed as param
     @pytest.fixture
     def mock_solr_request(self, request):
         with patch("impc_api_helper.batch_solr_request.solr_request") as mock:
-            # Mock expected return content of the solr_request (numFound and _)
+            # Mock expected return content of the solr_request (numFound and df)
             mock.return_value = (request.param, pd.DataFrame())
             yield mock
 
-    # Pytest fixture mocking _batch_to_df
+    # Fixture mocking _batch_to_df
     @pytest.fixture
     def mock_batch_to_df(self):
         with patch("impc_api_helper.batch_solr_request._batch_to_df") as mock:
@@ -43,33 +42,35 @@ class TestBatchSolrRequest:
             mock.return_value = pd.DataFrame()
             yield mock
 
+    # Test no download - small request
     # Parameters to determine the numFound of mock_solr_request
     @pytest.mark.parametrize("mock_solr_request", [10000], indirect=True)
     def test_batch_solr_request_no_download_small_request(
         self, mock_solr_request, core, common_params, capsys, mock_batch_to_df
     ):
-        # Call your function that uses the mocked request
-        # Set up mock_solr_request values
+        # Call tested function
         result = batch_solr_request(core, params=common_params, download=False)
 
-        # # Assert the mock was called with the expected parameters (start = 0, rows = 0) despite calling other values.
+        # Assert the mock was called with the expected parameters (start = 0, rows = 0) despite calling other values.
         mock_solr_request.assert_called_with(
             core=core,
             params={**common_params, "start": 0, "rows": 0, "wt": "json"},
             silent=True,
         )
 
-        # Capture stoud
+        # Retrieve the numFound
         num_found = mock_solr_request.return_value[0]
+        # Capture stoud
         captured = capsys.readouterr()
         assert captured.out == f"Number of found documents: {num_found}\n"
 
         # Check _batch_to_df was called
         mock_batch_to_df.assert_called_once()
 
+    # Test no download - large request
     # Set mock_solr_request to return a large numFound
     @pytest.mark.parametrize("mock_solr_request", [1000001], indirect=True)
-    # Parameter to test 4 cases: when user selects 'y' or 'n' upon large download warning.
+    # Parameter to test 4 cases: when user selects 'y','' or 'n','exit' upon large download warning.
     @pytest.mark.parametrize(
         "user_input,expected_outcome",
         [("y", "continue"), ("", "continue"), ("n", "exit"), ("exit", "exit")],
@@ -88,7 +89,7 @@ class TestBatchSolrRequest:
         # Monkeypatch the input() function with parametrized user input
         monkeypatch.setattr("builtins.input", lambda _: user_input)
 
-        # When user selects 'n', exit should be triggered.
+        # When user types 'n' or 'exit', exit should be triggered.
         if expected_outcome == "exit":
             with pytest.raises(SystemExit):
                 batch_solr_request(
@@ -102,9 +103,10 @@ class TestBatchSolrRequest:
         # Capture the exit messages
         captured = capsys.readouterr()
 
-        # Assertions for continue case
+        # Retrieve numFound
         num_found = mock_solr_request.return_value[0]
 
+        # Assertions for continue case
         assert f"Number of found documents: {num_found}" in captured.out
 
         if expected_outcome == "continue":
@@ -121,8 +123,8 @@ class TestBatchSolrRequest:
             assert "Exiting gracefully" in captured.out
             mock_batch_to_df.assert_not_called()
 
-    # TEST DOWNLOAD TRUE
-    # Fixture mocking the activity of _batch_solr_generator
+    # Test download - large request
+    # Fixture mocking _batch_solr_generator
     @pytest.fixture
     def mock_batch_solr_generator(self):
         with patch(
@@ -130,6 +132,7 @@ class TestBatchSolrRequest:
         ) as mock:
             yield mock
 
+    # Fixture mocking _solr_downloader. Yields a tmp_path to write a file for the duration of the test.
     @pytest.fixture
     def mock_solr_downloader(self, tmp_path):
         with patch("impc_api_helper.batch_solr_request._solr_downloader") as mock:
@@ -137,7 +140,7 @@ class TestBatchSolrRequest:
             temp_dir.mkdir()
             yield mock
 
-    # Mock response for test containing more than 2,000,000 docs
+    # Mock response for test containing 2,000,000 docs
     @pytest.mark.parametrize("mock_solr_request", [2000000], indirect=True)
     # Parametrized decorator to simulate reading a json and csv files
     @pytest.mark.parametrize(
@@ -200,7 +203,8 @@ class TestBatchSolrRequest:
         # Check the function returns None
         assert result is None
 
-    # Mock params
+    # Test download - multiple fields - large and small
+    # Mock params for a multiple field query
     @pytest.fixture
     def multiple_field_params(self):
         return {
@@ -212,7 +216,7 @@ class TestBatchSolrRequest:
             "wt": "json",
         }
 
-    # Mock response for test containing more than 2,000,000 docs
+    # Mock response for test containing a large request and a small request
     @pytest.mark.parametrize("mock_solr_request", [(2000000), (10000)], indirect=True)
     @pytest.mark.parametrize(
         "download_bool",
@@ -232,15 +236,15 @@ class TestBatchSolrRequest:
         mock_solr_downloader,
         tmp_path,
     ):
-        # This test should make sure the request is formatted properly. Regardless of going to downloads or to _batch_to_df
-        # Get num_found
+        # This test should ensure the request is formatted properly. Regardless of going to downloads or to _batch_to_df
+        # Retrieve  num_found
         num_found = mock_solr_request.return_value[0]
-        # In the case where download=False and numFound is > 1,000,001 we pass 'y' in this test case.
+        # When download=False and numFound is > 1,000,001 we pass 'y' in this test case.
         if not download_bool and num_found == 2000000:
             monkeypatch.setattr("builtins.input", lambda _: "y")
 
         # Call test function
-        # If download is True create a temporary file and call with the path_to_download
+        # If download==True, create a temporary file and call with the path_to_download
         if download_bool:
             temp_dir = tmp_path / "temp_dir"
             temp_file = temp_dir / f"{core}.json"
@@ -262,9 +266,9 @@ class TestBatchSolrRequest:
         assert f"Number of found documents: {num_found}" in captured.out
         assert 'Queried field: fruits:("orange" OR apple OR *berry)' in captured.out
 
-        # If download was true, check subsequent functions were executed
+        # If download==True, check subsequent functions were executed
         if download_bool:
-            # Check _batch_solr_generator gets called once with correct args
+            # Check _batch_solr_generator gets called with correct args
             mock_batch_solr_generator.assert_called_with(
                 core, multiple_field_params, num_found
             )
@@ -294,7 +298,7 @@ class TestBatchSolrRequest:
 
 # Have helper functions in a different class to separate fixtures and parameters
 class TestHelpersSolrBatchRequest:
-    # Define a generator to produce DF's dynamically
+    # Define a generator to produce df's dynamically
     def data_generator(self):
         """Generator to produce data dynamically (row by row or doc by doc)/
 
@@ -307,8 +311,8 @@ class TestHelpersSolrBatchRequest:
         for i, a in enumerate(animals):
             yield (i, a)
 
-    # Fixture containing the solr_request function mock
-    # Num_found is passed dynamically as params in the test
+    # Fixture mocking solr_request in the batch_solr_request module
+    # Num_found is passed dynamically as params during the test
     # Generates df's dynamically using the data generator
     @pytest.fixture
     def mock_solr_request_generator(self, request):
@@ -330,16 +334,17 @@ class TestHelpersSolrBatchRequest:
             mock.side_effect = side_effect
             yield mock
 
-    # Fixture containing the params of a normal batch_solr_request
+    # Fixture containing the params of a normal batch_solr_request with flexible number of rows (batch_size).
     @pytest.fixture
     def batch_params(self, rows):
         return {"start": 0, "rows": rows, "wt": "json"}
 
+    # Fixture to pass different num_found values per test
     @pytest.fixture
     def num_found(self, request):
         return request.param
 
-    # Parameters to be passsed to the test: the num_found for mock_solr_request_generator, the num_found separately, and rows (batch_size).
+    # Parameters to be passsed to the test: a num_found value for mock_solr_request_generator, a num_found separately, and rows (batch_size).
     # Note num_found is returned by solr_request, when we access it using the generator function, it causes issues.
     # Hence, we pass num_found separately as a fixture.
     @pytest.mark.parametrize(
@@ -390,7 +395,7 @@ class TestHelpersSolrBatchRequest:
             # Call the generator
             data_generator = self.data_generator()
 
-            # Use the side_effects to return num_found and the dfs
+            # Use the side_effects to return num_found and the response data
             def side_effect(*args, **kwargs):
                 # Create a mock response object
                 mock_response = Mock()
@@ -422,6 +427,7 @@ class TestHelpersSolrBatchRequest:
     def batch_solr_generator_params(self):
         return {"start": 0, "rows": 1}
 
+    # Parameters with the params for fixtures and the expected results
     @pytest.mark.parametrize(
         "mock_requests_get,expected_results",
         [
@@ -457,15 +463,12 @@ class TestHelpersSolrBatchRequest:
         batch_solr_generator_params["wt"] = mock_requests_get.return_value.format
         rows = batch_solr_generator_params["rows"]
 
-        # Create the generator
+        # Call the generator
         result = _batch_solr_generator(core, batch_solr_generator_params, num_results)
 
-        # # Assertions for json data
-        # if batch_solr_generator_params["wt"] == "json":
         # Loop over the expected results and check corresponding calls
         for idx, exp_result in enumerate(expected_results):
             # Call the next iteration
-
             assert next(result) == exp_result
 
             # Check requests.get was called with the correct url, params [especially, the 'start' param], and timeout.
@@ -476,13 +479,14 @@ class TestHelpersSolrBatchRequest:
             )
 
     # Simpler approach to test when status code is not 200
+    # Fixture to mock requests.get returning a status code.
     @pytest.fixture
     def mock_requests_get_error(self, request):
         with patch("impc_api_helper.batch_solr_request.requests.get") as mock_get:
             mock_get.return_value.status_code = request.param
             yield mock_get
 
-    # Set up test for _batch_solr_generator when status code is not 200
+    # Params for _batch_solr_generator when status code is not 200
     @pytest.mark.parametrize(
         "mock_requests_get_error", [404, 500], indirect=["mock_requests_get_error"]
     )
@@ -503,8 +507,12 @@ class TestHelpersSolrBatchRequest:
                 )
             )
 
+    # Fixture to mock _solr_generator.
     @pytest.fixture
     def mock_solr_generator(self, request):
+        """
+        Mocks a generator yielding 2 batches/chunks to the tested function
+        """
         format = request.param
         if format == "json":
 
@@ -538,11 +546,13 @@ class TestHelpersSolrBatchRequest:
 
             yield data_chunks()
 
+    # Parameters for test function, one for the fixture and one as the expected format
     @pytest.mark.parametrize(
         "mock_solr_generator, expected_format",
         [("json", "json"), ("csv", "csv")],
         indirect=["mock_solr_generator"],
     )
+    # Test the writer
     def test_solr_downloader(
         self,
         mock_solr_generator,
@@ -575,13 +585,14 @@ class TestHelpersSolrBatchRequest:
                     {"id": 4, "number": 99},
                     {"id": 5, "number": 98},
                 ]
-                # Check it loads into a pd.DataFrame
+                # Load data into a df
                 test_df = pd.read_json(test_file)
 
             elif expected_format == "csv":
                 content = f.read()
 
                 assert content == "id,number\n0,0\n1,1\n2,2\n3,100\n4,99\n5,98\n"
+                # Load data into a df
                 test_df = pd.read_csv(test_file)
 
             # Assert the structure of the final df
