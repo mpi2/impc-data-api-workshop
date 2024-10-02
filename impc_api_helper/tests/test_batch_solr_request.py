@@ -8,6 +8,14 @@ from impc_api_helper.batch_solr_request import (
     _batch_to_df,
     _solr_downloader,
 )
+from unittest.mock import patch, call, Mock
+from impc_api_helper.batch_solr_request import (
+    batch_solr_request,
+    _batch_solr_generator,
+    solr_request,
+    _batch_to_df,
+    _solr_downloader,
+)
 import json
 import pandas as pd
 from pandas.testing import assert_frame_equal
