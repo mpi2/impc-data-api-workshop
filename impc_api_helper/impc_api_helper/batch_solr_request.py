@@ -6,7 +6,25 @@ from tqdm import tqdm
 from .solr_request import solr_request
 from pathlib import Path
 
+
 def batch_solr_request(core, params, download=False, batch_size=5000, path_to_download='./'):
+    """Function for large API requests (>1,000,000 results). Fetches the data in batches and 
+    produces a Pandas DataFrame or downloads a file in json or csv formats.
+
+    Additionally, allows to search multiple items in a list provided they belong to them same field.
+
+    Args:
+        core (str): name of IMPC solr core.
+        params (dict): dictionary containing the API call parameters.
+        download (bool, optional): True for download a local file, False to display results as a DataFrame. Defaults to False.
+        batch_size (int, optional): Size of batches to fetch the data. Defaults to 5000.
+        path_to_download (str, optional): When download=True, select the path to download the file. Defaults to './'.
+
+
+    Returns:
+        pd.DataFrame: if download=False, displays a DataFrame with the results.
+        None: if download=True, displays a statement on the console and returns None.
+    """
     # Set params for batch request
     params["start"] = 0  # Start at the first result
     params["rows"] = batch_size  # Fetch results in chunks of 5000
@@ -71,6 +89,16 @@ def batch_solr_request(core, params, download=False, batch_size=5000, path_to_do
 
 # Helper batch_to_df
 def _batch_to_df(core, params, num_results):
+    """Helper function to fetch data in batches and display them in a DataFrame
+
+    Args:
+        core (str): name of IMPC solr core.
+        params (dict): dictionary containing the API call parameters.
+        num_results (int): Number of docs available
+
+    Returns:
+        pd.DataFrame: DataFrame with the results.
+    """
     start = params["start"]
     batch_size = params["rows"]
     chunks = []
@@ -99,6 +127,19 @@ def _batch_to_df(core, params, num_results):
 
 
 def _batch_solr_generator(core, params, num_results):
+    """"Generator function to fetch results from the SOLR API in batches using pagination.
+
+    Args:
+        core (str): name of IMPC solr core.
+        params (dict): dictionary containing the API call parameters.
+        num_results (int): Number of docs available
+
+    Raises:
+        Exception: If a problem occurs during the download, an exception is raised.
+
+    Yields:
+        ([dict, str]): A JSON object or plain text with the results.
+    """
     base_url = "https://www.ebi.ac.uk/mi/impc/solr/"
     solr_url = base_url + core + "/select"
     start = params["start"]
@@ -130,6 +171,14 @@ def _batch_solr_generator(core, params, num_results):
 
 # File writer
 def _solr_downloader(params, filename, solr_generator):
+    """Function to write the data from the generator into the specified format.
+    Currently supports json and csv only.
+
+    Args:
+        params (dict): dictionary containing the API call parameters.
+        filename (str): name for the file to be downloaded. Defaults to core.format as per parent function.
+        solr_generator ([dict, str]): Generator object with the results.
+    """
     with open(filename, "w", encoding="UTF-8") as f:
         
         if params.get("wt") == "json":
