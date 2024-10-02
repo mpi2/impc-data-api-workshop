@@ -25,9 +25,23 @@ num_found, df = solr_request( core='genotype-phenotype', params={
 )
 ```
 
-### Batch request
-For larger requests, use the batch request function to query the API responsibly.
+#### Facet request
+`solr_request` allows facet requests
+
 ```
+num_found, df = solr_request(
+     core="genotype-phenotype",
+     params={
+         "q": "*:*",
+         "rows": 0,
+         "facet": "on",
+         "facet.field": "zygosity",
+         "facet.limit": 15,
+         "facet.mincount": 1,
+     },
+ )
+```
+
 ### Batch Solr Request
 `batch_solr_request` is available for large queries. This solves issues where a request is too large to fit into memory or where it puts a lot of strain on the API. 
 
@@ -108,3 +122,6 @@ batch_solr_request(
     path_to_download='downloads'
 )
 ```
+
+
+
