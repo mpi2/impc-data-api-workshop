@@ -1,5 +1,5 @@
-from .solr_request import solr_request, batch_request
-from .iterator_solr_request import iterator_solr_request
+from .solr_request import solr_request
+from .iterator_solr_request import batch_solr_request
 
 # Control what gets imported by client
-__all__ = ["solr_request", "batch_request", "iterator_solr_request"]
+__all__ = ["solr_request", "batch_solr_request"]
