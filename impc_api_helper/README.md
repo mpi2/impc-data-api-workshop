@@ -12,7 +12,7 @@ The functions in this package are intended for use on a Jupyter Notebook.
 ### Available functions
 The available functions can be imported as:
 
-`from impc_api_helper import solr_request, batch_request, iterator_solr_request`
+`from impc_api_helper import solr_request, batch_solr_request,`
 
 ### Solr request
 The most basic request to the IMPC solr API
