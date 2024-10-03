@@ -49,7 +49,10 @@ class TestBatchSolrRequest:
         self, mock_solr_request, core, common_params, capsys, mock_batch_to_df
     ):
         # Call tested function
-        result = batch_solr_request(core, params=common_params, download=False)
+        result = batch_solr_request(core, params=common_params, download=False, batch_size=100)
+
+        # Assert the value of params was changed to batch_size
+        assert common_params["rows"] == 100
 
         # Assert the mock was called with the expected parameters (start = 0, rows = 0) despite calling other values.
         mock_solr_request.assert_called_with(
@@ -150,12 +153,12 @@ class TestBatchSolrRequest:
         "params_format, format, file_content",
         [
             (
-                {"start": 0, "rows": 2000000, "wt": "json"},
+                {"start": 0, "rows": 0, "wt": "json"},
                 "json",
                 '[{"id": "1", "city": "Houston"},{"id": "2", "city": "Prague"}]',
             ),
             (
-                {"start": 0, "rows": 2000000, "wt": "csv"},
+                {"start": 0, "rows": 0, "wt": "csv"},
                 "csv",
                 "id,city\n1,Houston\n2,Prague\n",
             ),
@@ -184,11 +187,12 @@ class TestBatchSolrRequest:
         # First we call the function
         # We patch solr_request to get the number of docs
         result = batch_solr_request(
-            core, params=params_format, download=True, path_to_download=temp_dir
+            core, params=params_format, download=True, path_to_download=temp_dir, batch_size=2000000
         )
         num_found = mock_solr_request.return_value[0]
 
-        # Assert params rows has been updated to the value of batch_size
+        # Assert params["rows"] == batch size and not the original value (0)
+        assert params_format["rows"] == 2000000
 
         # Check _batch_solr_generator gets called once with correct args
         mock_batch_solr_generator.assert_called_once_with(
