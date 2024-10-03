@@ -7,8 +7,10 @@ from .solr_request import solr_request
 from pathlib import Path
 
 
-def batch_solr_request(core, params, download=False, batch_size=5000, path_to_download='./'):
-    """Function for large API requests (>1,000,000 results). Fetches the data in batches and 
+def batch_solr_request(
+    core, params, download=False, batch_size=5000, path_to_download="./"
+):
+    """Function for large API requests (>1,000,000 results). Fetches the data in batches and
     produces a Pandas DataFrame or downloads a file in json or csv formats.
 
     Additionally, allows to search multiple items in a list provided they belong to them same field.
@@ -54,7 +56,7 @@ def batch_solr_request(core, params, download=False, batch_size=5000, path_to_do
     )
     print(f"Number of found documents: {num_results}")
 
-    # Download/display only logic
+    # Download only logic
     # If user decides to download, a generator is used to fetch data in batches without storing results in memory.
     if download:
         # Implement loop behaviour
@@ -80,11 +82,9 @@ def batch_solr_request(core, params, download=False, batch_size=5000, path_to_do
             case "n" | "exit":
                 print("Exiting gracefully")
                 exit()
-            case "y" | '':
+            case "y" | "":
                 print("Fetching data...")
                 return _batch_to_df(core, params, num_results)
-
-
 
 
 # Helper batch_to_df
@@ -127,7 +127,7 @@ def _batch_to_df(core, params, num_results):
 
 
 def _batch_solr_generator(core, params, num_results):
-    """"Generator function to fetch results from the SOLR API in batches using pagination.
+    """Generator function to fetch results from the SOLR API in batches using pagination.
 
     Args:
         core (str): name of IMPC solr core.
@@ -155,12 +155,12 @@ def _batch_solr_generator(core, params, num_results):
                     data = response.json()["response"]["docs"]
                 else:
                     data = response.text
-                
+
                 # Update and refresh the progress bar after getting the data
                 pbar.update(batch_size)
                 pbar.refresh()
                 yield data
-                
+
             else:
                 raise Exception(f"Request failed. Status code: {response.status_code}")
 
@@ -172,15 +172,15 @@ def _batch_solr_generator(core, params, num_results):
 # File writer
 def _solr_downloader(params, filename, solr_generator):
     """Function to write the data from the generator into the specified format.
-    Currently supports json and csv only.
+    Supports json and csv only.
 
     Args:
         params (dict): dictionary containing the API call parameters.
-        filename (str): name for the file to be downloaded. Defaults to core.format as per parent function.
+        filename (Path): name for the file to be downloaded. Defaults to "core.format" as passed by parent function.
         solr_generator ([dict, str]): Generator object with the results.
     """
     with open(filename, "w", encoding="UTF-8") as f:
-        
+
         if params.get("wt") == "json":
             f.write("[\n")
             first_chunk = True
@@ -205,5 +205,4 @@ def _solr_downloader(params, filename, solr_generator):
                     first_chunk = False
                 else:
                     # Skip the first line (header) in subsequent chunks
-                    f.write('\n' + '\n'.join(lines[1:]) + '\n')
-
+                    f.write("\n" + "\n".join(lines[1:]) + "\n")
