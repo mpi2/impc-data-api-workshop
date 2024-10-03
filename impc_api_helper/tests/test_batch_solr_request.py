@@ -23,7 +23,7 @@ class TestBatchSolrRequest:
     # Fixture containing the params of a normal batch_solr_request
     @pytest.fixture
     def common_params(self):
-        return {"start": 0, "rows": 10000, "wt": "json"}
+        return {"start": 0, "rows": 0, "wt": "json"}
 
     # Fixture mocking solr_request within the batch_solr_request module.
     # solr_request will be mocked with different values for numFound, therefore it is passed as param
@@ -75,7 +75,7 @@ class TestBatchSolrRequest:
         "user_input,expected_outcome",
         [("y", "continue"), ("", "continue"), ("n", "exit"), ("exit", "exit")],
     )
-    def test_batch_solr_request_no_download_large_request(
+    def test_batch_solr_request_download_false_large_request(
         self,
         core,
         common_params,
@@ -89,15 +89,18 @@ class TestBatchSolrRequest:
         # Monkeypatch the input() function with parametrized user input
         monkeypatch.setattr("builtins.input", lambda _: user_input)
 
+        # Set a batch_size for clarity
+        batch_size = 500000
+
         # When user types 'n' or 'exit', exit should be triggered.
         if expected_outcome == "exit":
             with pytest.raises(SystemExit):
                 batch_solr_request(
-                    core, params=common_params, download=False, batch_size=5000
+                    core, params=common_params, download=False, batch_size=batch_size
                 )
         else:
             result = batch_solr_request(
-                core, params=common_params, download=False, batch_size=5000
+                core, params=common_params, download=False, batch_size=batch_size
             )
 
         # Capture the exit messages
@@ -114,8 +117,8 @@ class TestBatchSolrRequest:
                 "Your request might exceed the available memory. We suggest setting 'download=True' and reading the file in batches"
                 in captured.out
             )
-            mock_batch_to_df.assert_called_once_with(
-                "test_core", {"start": 0, "rows": 5000, "wt": "json"}, 1000001
+            mock_batch_to_df.assert_called_with(
+                "test_core", {"start": 0, "rows": batch_size, "wt": "json"}, num_found
             )
 
         # Assertion for exit case
@@ -184,6 +187,8 @@ class TestBatchSolrRequest:
             core, params=params_format, download=True, path_to_download=temp_dir
         )
         num_found = mock_solr_request.return_value[0]
+
+        # Assert params rows has been updated to the value of batch_size
 
         # Check _batch_solr_generator gets called once with correct args
         mock_batch_solr_generator.assert_called_once_with(
@@ -258,7 +263,7 @@ class TestBatchSolrRequest:
         else:
             # Otherwise, call without the path_to_download
             result = batch_solr_request(
-                core, params=multiple_field_params, download=download_bool
+                core, params=multiple_field_params, download=download_bool, batch_size=5000
             )
 
         # Check output which should be equal for both.
@@ -336,8 +341,8 @@ class TestHelpersSolrBatchRequest:
 
     # Fixture containing the params of a normal batch_solr_request with flexible number of rows (batch_size).
     @pytest.fixture
-    def batch_params(self, rows):
-        return {"start": 0, "rows": rows, "wt": "json"}
+    def batch_params(self, batch_size):
+        return {"start": 0, "rows": batch_size, "wt": "json"}
 
     # Fixture to pass different num_found values per test
     @pytest.fixture
@@ -348,13 +353,14 @@ class TestHelpersSolrBatchRequest:
     # Note num_found is returned by solr_request, when we access it using the generator function, it causes issues.
     # Hence, we pass num_found separately as a fixture.
     @pytest.mark.parametrize(
-        "mock_solr_request_generator,num_found,rows",
+        "mock_solr_request_generator,num_found,batch_size",
         [(50000, 50000, 10000), (5, 5, 1), (25000, 25000, 5000)],
         indirect=["mock_solr_request_generator"],
     )
     def test_batch_to_df(
-        self, core, batch_params, num_found, mock_solr_request_generator, rows
+        self, core, batch_params, num_found, mock_solr_request_generator, batch_size
     ):
+    
         # Call the tested function
         df = _batch_to_df(core, batch_params, num_found)
 
@@ -362,7 +368,7 @@ class TestHelpersSolrBatchRequest:
         expected_calls = [
             call(
                 core=core,
-                params={**batch_params, "start": i * rows, "rows": rows},
+                params={**batch_params, "start": i * batch_size, "rows": batch_size},
                 silent=True,
             )
             for i in range(5)
@@ -425,7 +431,7 @@ class TestHelpersSolrBatchRequest:
     # Fixture containing the params for batch_solr_generator
     @pytest.fixture
     def batch_solr_generator_params(self):
-        return {"start": 0, "rows": 1}
+        return {"q": "*:*", "start": 0, "rows": 1}
 
     # Parameters with the params for fixtures and the expected results
     @pytest.mark.parametrize(
@@ -461,20 +467,25 @@ class TestHelpersSolrBatchRequest:
         num_results = 5
         # Define the wt and batch_size param for the test
         batch_solr_generator_params["wt"] = mock_requests_get.return_value.format
-        rows = batch_solr_generator_params["rows"]
+        batch_size = 1
+
+        # Override rows as the parent function would
+        batch_solr_generator_params["rows"] = batch_size
 
         # Call the generator
         result = _batch_solr_generator(core, batch_solr_generator_params, num_results)
 
         # Loop over the expected results and check corresponding calls
-        for idx, exp_result in enumerate(expected_results):
+        for idx, exp_result in enumerate(expected_results, start=0):
             # Call the next iteration
             assert next(result) == exp_result
 
             # Check requests.get was called with the correct url, params [especially, the 'start' param], and timeout.
+            # The first call will always be with the params["rows"] value, 1 in this case.
+            # Since the function
             mock_requests_get.assert_called_with(
                 "https://www.ebi.ac.uk/mi/impc/solr/test_core/select",
-                params={**batch_solr_generator_params, "start": idx, "rows": rows},
+                params={**batch_solr_generator_params, "start": idx, "rows": batch_size},
                 timeout=10,
             )
 
