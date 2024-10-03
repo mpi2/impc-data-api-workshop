@@ -29,7 +29,8 @@ def batch_solr_request(
     """
     # Set params for batch request
     params["start"] = 0  # Start at the first result
-    params["rows"] = batch_size  # Fetch results in chunks of 5000
+    # Override param rows in case there was input. Defines batch size to 5000 by default
+    params["rows"] = batch_size
 
     # If user did not specify format, defaults to json.
     if params.get("wt") is None:
@@ -186,11 +187,9 @@ def _solr_downloader(params, filename, solr_generator):
             first_chunk = True
 
             for chunk in solr_generator:
-                # print('CHUNK',chunk,'\n')
                 for item in chunk:
                     if not first_chunk:
                         f.write(",\n")
-                    # print('ITEM',item)
                     json.dump(item, f, ensure_ascii=False)
                     first_chunk = False
             f.write("\n]\n")
