@@ -109,8 +109,6 @@ def _batch_to_df(core, params, num_results):
     # Request chunks until we have complete data.
     with tqdm(total=num_results) as pbar:
         while start < num_results:
-            # Update progress bar with the number of rows requested.
-            pbar.update(batch_size)
 
             # Request chunk. We don't need num_results anymore because it does not change.
             _, df_chunk = solr_request(
@@ -119,6 +117,9 @@ def _batch_to_df(core, params, num_results):
                 silent=True,
             )
 
+            # Update progress bar with the number of rows requested.
+            pbar.update(batch_size)
+            pbar.refresh()
             # Record chunk.
             chunks.append(df_chunk)
             # Increment start.
