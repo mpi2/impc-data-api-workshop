@@ -12,14 +12,16 @@ The functions in this package are intended for use on a Jupyter Notebook.
 ### Available functions
 The available functions can be imported as:
 
-`from impc_api_helper import solr_request, batch_solr_request,`
+```
+from impc_api_helper import solr_request, batch_solr_request
+```
 
 ### Solr request
 The most basic request to the IMPC solr API
 ```
 num_found, df = solr_request( core='genotype-phenotype', params={
-        'q': '*:*'
-        'rows': 10
+        'q': '*:*',
+        'rows': 10, 
         'fl': 'marker_symbol,allele_symbol,parameter_stable_id'
     }
 )
@@ -64,7 +66,8 @@ df = batch_solr_request(
     params={
         'q':'*:*'
     },
-    download=False
+    download=False,
+    batch_size=30000
 )
 print(df.head())
 ```
@@ -80,7 +83,8 @@ batch_solr_request(
         'wt':'csv'
     },
     download=True,
-    path_to_download = 'downloads'
+    path_to_download = '.',
+    batch_size=20000
 )
 ```
 
