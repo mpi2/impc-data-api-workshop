@@ -11,6 +11,7 @@ setup(
         'pandas>=2.2.0',
         'requests>=2.31.0',
         'tqdm>=4.66.4',
+        'pydantic>=2.9'
     ],
 
     extras_require={
