@@ -1,9 +1,11 @@
 from IPython.display import display
+from pydantic import ValidationError
 from tqdm import tqdm
 
 
 import pandas as pd
 import requests
+from .utils.utils import CoreParamsValidator
 
 # Display the whole dataframe <15
 pd.set_option("display.max_rows", 15)
@@ -61,6 +63,18 @@ def solr_request(core, params, silent=False):
         )
     """
 
+    # Validate core and params
+    print("Validating core and params...")
+    try:
+        CoreParamsValidator(
+            core=core,
+            params=params
+        )
+        print("Validation passed ")
+    except ValidationError as e:
+        print(f"Validation failed: {e.errors()[0].get('msg')}")
+
+
     base_url = "https://www.ebi.ac.uk/mi/impc/solr/"
     solr_url = base_url + core + "/select"
 
@@ -95,8 +109,9 @@ def solr_request(core, params, silent=False):
         return num_found, df
 
     else:
-        print("Error:", response.status_code, response.text)
-
+        # print("Error:", response.status_code, response.text)
+        print("Error:", response.status_code)
+        exit()
 
 def _process_faceting(data, params):
     """Processes the faceting data from an API response.
