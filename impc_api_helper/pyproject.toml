@@ -26,9 +26,9 @@ dev = [
     "pytest>=8.2.2"
 ]
 
+[tool.setuptools.packages.find]
+include = ["impc_api_helper", "impc_api_helper.*"]
 
 [project.urls]
 "Homepage" = "https://github.com/mpi2/impc-data-api-workshop"
 
-[tool.setuptools]
-packages = ["impc_api_helper"]

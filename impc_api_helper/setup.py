@@ -1,12 +1,14 @@
 from setuptools import setup, find_packages
 
+
 setup(
     name='impc_api_helper',
     version='0.1.0',
     description='A package to facilitate making API request to the IMPC Solr API',
     author='MPI2, Marina Kan, Diego Pava',
     url='https://github.com/mpi2/impc-data-api-workshop',
-    packages=find_packages(),
+    packages=find_packages(include=["impc_api_helper", "impc_api_helper.*"]),
+    include_package_data=True,
     install_requires=[
         'pandas>=2.2.0',
         'requests>=2.31.0',
