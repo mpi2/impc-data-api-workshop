@@ -12,7 +12,7 @@ warning_config()
 # Dataclass for the json validator
 @dataclass
 class ValidationJson:
-    CORE_FILE: Path = Path('impc_api_helper', 'impc_api_helper', 'utils', 'core_fields.json')
+    CORE_FILE: Path = Path(__file__).resolve().parent / 'core_fields.json'
     _validation_json: Dict[str, List[str]] = field(default_factory=dict, init=False)
 
     # Eager initialisation
