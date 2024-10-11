@@ -41,6 +41,7 @@ class CoreParamsValidator(BaseModel):
     @model_validator(mode='before')
     @classmethod
     def validate_core_and_fields(cls, values):
+        invalid_core: bool = False
         core = values.get("core")
         params = values.get("params")
 
@@ -49,6 +50,7 @@ class CoreParamsValidator(BaseModel):
 
         # Validate core
         if core not in jv.valid_cores():
+            invalid_core = True
             warnings.warn(
                 message=f'Invalid core: "{core}", select from the available cores:\n{jv.valid_cores()})\n',
                 category=InvalidCoreWarning)
@@ -67,10 +69,11 @@ class CoreParamsValidator(BaseModel):
 
         # Validate each field in params
         # TODO: perhaps pass al invalid fields as a list, instead of many warning messages
-        for fl in field_list:
-            if fl not in jv.valid_fields(core):
-                warnings.warn(message=f"""Unexpected field name: "{fl}". Check the spelling of fields.\nTo see expected fields check the documentation at: https://www.ebi.ac.uk/mi/impc/solrdoc/""",
-                category=InvalidFieldWarning)
+        if invalid_core is not True:
+            for fl in field_list:
+                if fl not in jv.valid_fields(core):
+                    warnings.warn(message=f"""Unexpected field name: "{fl}". Check the spelling of fields.\nTo see expected fields check the documentation at: https://www.ebi.ac.uk/mi/impc/solrdoc/""",
+                    category=InvalidFieldWarning)
         # Return validated values
         return values
 
