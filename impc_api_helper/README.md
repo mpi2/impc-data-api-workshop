@@ -27,6 +27,35 @@ num_found, df = solr_request( core='genotype-phenotype', params={
 )
 ```
 
+#### Solr request validation
+A common pitfall when writing a query is the misspelling of `core` and `fields` arguments. For this, we have included an `validate` argument that raises a warning when these values are not as expected. Note this does not prevent you from executing a query; it just alerts you to a potential issue.
+
+##### Core validation
+```
+num_found, df = solr_request( core='invalid_core', params={
+        'q': '*:*',
+        'rows': 10
+    },
+    validate=True
+)
+
+> InvalidCoreWarning: Invalid core: "genotype-phenotyp", select from the available cores:
+> dict_keys(['experiment', 'genotype-phenotype', 'impc_images', 'phenodigm', 'statistical-result']))
+```
+
+##### Field list validation
+```
+num_found, df = solr_request( core='genotype-phenotype', params={
+        'q': '*:*',
+        'rows': 10,
+        'fl': 'invalid_field,marker_symbol,allele_symbol'
+    },
+    validate=True
+)
+> InvalidFieldWarning: Unexpected field name: "invalid_field". Check the spelling of fields.
+> To see expected fields check the documentation at: https://www.ebi.ac.uk/mi/impc/solrdoc/
+```
+
 #### Facet request
 `solr_request` allows facet requests
 
