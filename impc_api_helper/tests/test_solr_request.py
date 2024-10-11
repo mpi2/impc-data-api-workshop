@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch
 from solr_request import solr_request, _process_faceting
 from .test_helpers import check_url_status_code_and_params
-
+from impc_api_helper.utils.warnings import InvalidCoreWarning, InvalidFieldWarning
 
 class TestSolrRequest:
     """Test class for the Solr Request function
@@ -286,3 +286,48 @@ class TestSolrRequest:
         assert df.iloc[1, 1] == 9
         assert df.iloc[2, 0] == "banana"
         assert df.iloc[2, 1] == 24
+
+
+    @pytest.mark.parametrize(
+        "mock_response",
+        [
+            {
+                    "status_code": 200,
+                    "json": {
+                        "response": {
+                            "numFound": 101,
+                            "docs": [
+                            ],
+                        }
+                    },
+                },
+            ],
+        indirect=['mock_response']
+    )
+    def test_solr_request_core_validation(self, common_params, mock_response):
+        with pytest.warns(InvalidCoreWarning):
+            _ = solr_request(core='invalid_core', params=common_params, validate=True)
+
+    @pytest.mark.parametrize(
+        "mock_response",
+        [
+            {
+                    "status_code": 200,
+                    "json": {
+                        "response": {
+                            "numFound": 101,
+                            "docs": [
+                            ],
+                        }
+                    },
+                },
+            ],
+        indirect=['mock_response']
+    )
+    def test_solr_request_fields_validation(self, mock_response):
+        with pytest.warns(InvalidFieldWarning):
+            _ = solr_request(core="experiment",
+                             params={'q':'*:*',
+                                    'fl': 'invalid_field,another_invalid_field'},
+                             validate=True)
+            
