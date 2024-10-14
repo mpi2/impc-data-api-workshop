@@ -1,9 +1,8 @@
 from IPython.display import display
 from tqdm import tqdm
-
-
 import pandas as pd
 import requests
+from impc_api_helper.utils.validators import CoreParamsValidator
 
 # Display the whole dataframe <15
 pd.set_option("display.max_rows", 15)
@@ -11,7 +10,7 @@ pd.set_option("display.max_columns", None)
 
 
 # Create helper function
-def solr_request(core, params, silent=False):
+def solr_request(core, params, silent=False, validate=False):
     """Performs a single Solr request to the IMPC Solr API.
     
     Args:
@@ -19,7 +18,10 @@ def solr_request(core, params, silent=False):
         params (dict): dictionary containing the API call parameters.
         silent (bool, optional): default False
             If True, displays: URL of API call, the number of found docs 
-            and a portion of the DataFrame. 
+            and a portion of the DataFrame.
+        validate (bool, optional): default False
+            If True, validates the parameters against the core schema and raises warnings
+            if any parameter seems invalid.
 
 
     Returns:
@@ -60,6 +62,12 @@ def solr_request(core, params, silent=False):
             }
         )
     """
+
+    if validate:
+        CoreParamsValidator(
+            core=core,
+            params=params
+        )
 
     base_url = "https://www.ebi.ac.uk/mi/impc/solr/"
     solr_url = base_url + core + "/select"
