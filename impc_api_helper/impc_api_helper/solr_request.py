@@ -103,8 +103,7 @@ def solr_request(core, params, silent=False, validate=False):
         return num_found, df
 
     else:
-        # print("Error:", response.status_code, response.text)
-        print("Error:", response.status_code)
+        print("Error:", response.status_code, response.text)
 
 
 def _process_faceting(data, params):
