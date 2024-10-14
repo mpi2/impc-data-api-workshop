@@ -21,4 +21,3 @@ def warning_config():
 
     warnings.formatwarning = custom_warning
     warnings.simplefilter("always", Warning)
-
