@@ -76,7 +76,3 @@ class CoreParamsValidator(BaseModel):
                     category=InvalidFieldWarning)
         # Return validated values
         return values
-
-
-
-
