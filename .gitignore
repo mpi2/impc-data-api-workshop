@@ -12,3 +12,7 @@ dist/
 *.pytest*
 *.pytest_cache
 __pycache__
+
+
+# Local notes
+notes.md
