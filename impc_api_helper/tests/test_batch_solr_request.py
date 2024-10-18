@@ -8,18 +8,15 @@ from impc_api_helper.batch_solr_request import (
     _batch_to_df,
     _solr_downloader,
 )
-from unittest.mock import patch, call, Mock
-from impc_api_helper.batch_solr_request import (
-    batch_solr_request,
-    _batch_solr_generator,
-    solr_request,
-    _batch_to_df,
-    _solr_downloader,
-)
+from impc_api_helper.utils.warnings import RowsParamIgnored
 import json
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
+
+# When rows is passed to batch solr request, a warning is raised.
+# Let's ignore this warning in all tests except the one that asserts the warning
+pytestmark = pytest.mark.filterwarnings("ignore::impc_api_helper.utils.warnings.RowsParamIgnored")
 
 # Fixture containing the core
 @pytest.fixture
@@ -32,7 +29,7 @@ class TestBatchSolrRequest:
     @pytest.fixture
     def common_params(self):
         return {"start": 0, "rows": 0, "wt": "json"}
-
+    
     # Fixture mocking solr_request within the batch_solr_request module.
     # solr_request will be mocked with different values for numFound, therefore it is passed as param
     @pytest.fixture
@@ -311,6 +308,16 @@ class TestBatchSolrRequest:
             # Check the function returns a dataframe
             assert result is not None
             assert isinstance(result, pd.DataFrame) is True
+
+
+    # Test the warning when params["rows"] is passed
+    @pytest.mark.filterwarnings("default::impc_api_helper.utils.warnings.RowsParamIgnored")
+    @pytest.mark.parametrize("mock_solr_request", [10000], indirect=True)
+    def test_param_rows_warning(core, common_params, mock_solr_request):
+        with pytest.warns(RowsParamIgnored):
+            batch_solr_request(
+                        core, params=common_params
+                    )
 
 
 # Have helper functions in a different class to separate fixtures and parameters

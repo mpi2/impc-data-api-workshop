@@ -5,6 +5,7 @@ from pathlib import Path
 import warnings
 from dataclasses import dataclass, field
 from impc_api_helper.utils.warnings import warning_config, InvalidCoreWarning, InvalidFieldWarning
+# from .warnings import warning_config, InvalidCoreWarning, InvalidFieldWarning
 
 # Initialise warning config
 warning_config()

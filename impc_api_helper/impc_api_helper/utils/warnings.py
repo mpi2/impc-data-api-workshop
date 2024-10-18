@@ -12,6 +12,10 @@ class InvalidFieldWarning(Warning):
     """Exception raised when the field name is not in the expected fields"""
 
 
+class RowsParamIgnored(Warning):
+    """Warning raised when the row param is ignored"""
+
+
 # Custom warning function
 def warning_config():
     """Customises formatting and filters for warnings"""

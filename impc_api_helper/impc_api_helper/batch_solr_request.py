@@ -5,6 +5,13 @@ import requests
 from tqdm import tqdm
 from .solr_request import solr_request
 from pathlib import Path
+import warnings
+from impc_api_helper.utils.warnings import warning_config, RowsParamIgnored
+# from .utils.warnings import warning_config, RowsParamIgnored
+
+
+# Initialise warning config
+warning_config()
 
 
 def batch_solr_request(
@@ -27,6 +34,13 @@ def batch_solr_request(
         pd.DataFrame: if download=False, displays a DataFrame with the results.
         None: if download=True, displays a statement on the console and returns None.
     """
+
+    # If params["rows"] is passed, the user is warned about no effect
+    if params.get("rows") is not None:
+        warnings.warn(
+                message='The "rows" param will be ignored in batch_solr_request. To set a batch size, specify a "batch_size" argument.',
+                category=RowsParamIgnored)
+
     # Set params for batch request
     params["start"] = 0  # Start at the first result
     # Override param rows in case there was input. Defines batch size to 5000 by default
