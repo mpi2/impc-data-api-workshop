@@ -166,7 +166,7 @@ print(df.head())
 ```
 
 ##### Large query - Download
-When using the `download=True` option, no DataFrame will be returned, instead a file with the requested information will be saved to the path specified in `path_to_download`. 
+When using the `download=True` option, no DataFrame will be returned, instead a file with the requested information will be saved as `filename`. The format is selected based on the `wt` parameter.
 
 ```
 batch_solr_request(
@@ -176,7 +176,7 @@ batch_solr_request(
         'wt':'csv'
     },
     download=True,
-    path_to_download = '.',
+    filename='geno_pheno_query',
     batch_size=20000
 )
 ```
@@ -216,7 +216,7 @@ batch_solr_request(
         'field_type': 'marker_symbol'
     },
     download = True,
-    path_to_download='downloads'
+    filename='gene_list_query'
 )
 ```
 

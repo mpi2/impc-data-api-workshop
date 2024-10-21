@@ -183,16 +183,13 @@ class TestBatchSolrRequest:
         format,
         file_content,
     ):
-        # Create temporary files for the test
-        temp_dir = tmp_path / "temp_dir"
-        filename = f"{core}.{format}"
-        temp_file = temp_dir / filename
-        temp_file.write_text(file_content)
+        # Set a filename for the test
+        filename = f"{core}"
 
         # First we call the function
         # We patch solr_request to get the number of docs
         result = batch_solr_request(
-            core, params=params_format, download=True, path_to_download=temp_dir, batch_size=2000000
+            core, params=params_format, download=True, filename=filename, batch_size=2000000
         )
         num_found = mock_solr_request.return_value[0]
 
@@ -205,14 +202,15 @@ class TestBatchSolrRequest:
         )
 
         # Check _solr_downloader gets called once with correct args
+        # Checks the filename is a Path and has the corresponding format
         mock_solr_downloader.assert_called_once_with(
-            params_format, temp_file, mock_batch_solr_generator.return_value
+            params_format, Path(f"{filename}.{format}"), mock_batch_solr_generator.return_value
         )
 
         # Check the print statements
         captured = capsys.readouterr()
         assert f"Number of found documents: {num_found}" in captured.out
-        assert f"File saved as: {temp_file}" in captured.out
+        assert f"File saved as: {filename}.{format}" in captured.out
 
         # Check the function returns None
         assert result is None
@@ -260,14 +258,16 @@ class TestBatchSolrRequest:
         # Call test function
         # If download==True, create a temporary file and call with the path_to_download
         if download_bool:
-            temp_dir = tmp_path / "temp_dir"
-            temp_file = temp_dir / f"{core}.json"
-            temp_file.write_text('{"id": "1", "city": "Cape Town"}\n')
+            # temp_dir = tmp_path / "temp_dir"
+            filename = f"{core}"
+            # temp_file = temp_dir / f"{core}.json"
+            # temp_file.write_text('{"id": "1", "city": "Cape Town"}\n')
+
             result = batch_solr_request(
                 core,
                 params=multiple_field_params,
                 download=download_bool,
-                path_to_download=temp_dir,
+                filename=filename,
             )
         else:
             # Otherwise, call without the path_to_download
@@ -289,7 +289,7 @@ class TestBatchSolrRequest:
 
             # Check _solr_downloader gets called once with correct args
             mock_solr_downloader.assert_called_once_with(
-                multiple_field_params, temp_file, mock_batch_solr_generator.return_value
+                multiple_field_params, Path(f"{filename}.json"), mock_batch_solr_generator.return_value
             )
             # Check the function returns None
             assert result is None

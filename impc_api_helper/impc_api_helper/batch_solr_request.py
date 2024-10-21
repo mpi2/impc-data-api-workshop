@@ -15,7 +15,7 @@ warning_config()
 
 
 def batch_solr_request(
-    core, params, download=False, batch_size=5000, path_to_download="./"
+    core, params, download=False, batch_size=5000, filename="batch_request"
 ):
     """Function for large API requests (>1,000,000 results). Fetches the data in batches and
     produces a Pandas DataFrame or downloads a file in json or csv formats.
@@ -27,7 +27,7 @@ def batch_solr_request(
         params (dict): dictionary containing the API call parameters.
         download (bool, optional): True for download a local file, False to display results as a DataFrame. Defaults to False.
         batch_size (int, optional): Size of batches to fetch the data. Defaults to 5000.
-        path_to_download (str, optional): When download=True, select the path to download the file. Defaults to './'.
+        filename (str, optional): When download=True, select the name of the file. Defaults to 'batch_request'.
 
 
     Returns:
@@ -75,10 +75,10 @@ def batch_solr_request(
     # If user decides to download, a generator is used to fetch data in batches without storing results in memory.
     if download:
         # Implement loop behaviour
-        filename = Path(path_to_download) / f"{core}.{params['wt']}"
+        filename_path = Path(f"{filename}.{params["wt"]}")
         gen = _batch_solr_generator(core, params, num_results)
-        _solr_downloader(params, filename, gen)
-        print(f"File saved as: {filename}")
+        _solr_downloader(params, filename_path, gen)
+        print(f"File saved as: {filename_path}")
         return None
 
     # If the number of results is small enough and download is off, it's okay to show as df
