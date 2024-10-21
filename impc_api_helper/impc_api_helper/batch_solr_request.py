@@ -74,12 +74,19 @@ def batch_solr_request(
     # Download only logic
     # If user decides to download, a generator is used to fetch data in batches without storing results in memory.
     if download:
-        # Implement loop behaviour
-        filename_path = Path(f"{filename}.{params["wt"]}")
-        gen = _batch_solr_generator(core, params, num_results)
-        _solr_downloader(params, filename_path, gen)
-        print(f"File saved as: {filename_path}")
-        return None
+        try:
+            # Implement loop behaviour
+            print("Downloading file...")
+            filename_path = Path(f"{filename}.{params['wt']}")
+            gen = _batch_solr_generator(core, params, num_results)
+            _solr_downloader(params, filename_path, gen)
+            print(f"File saved as: {filename_path}")
+            
+            # Try to read the downloaded file
+            print("Reading downloaded file...")
+            return _read_downloaded_file(filename_path, params["wt"])
+        except Exception as e:
+            print(f"An unexpected error occured:{e}")
 
     # If the number of results is small enough and download is off, it's okay to show as df
     if num_results < 1000000 and not download:
@@ -220,3 +227,30 @@ def _solr_downloader(params, filename, solr_generator):
                 else:
                     # Skip the first line (header) in subsequent chunks
                     f.write("\n" + "\n".join(lines[1:]) + "\n")
+
+
+# File reader
+def _read_downloaded_file(filename: Path, request_format):
+    """ Wrapper for reading files into Pandas DataFrames
+
+    Args:
+        filename (Path): Name of the file to read
+        request_format (str): Format of the file to read. Only 'json' and 'csv' are supported.
+
+    Raises:
+        ValueError: When an unsupported format is passed.
+
+    Returns:
+        pd.DataFrame: Returns a pd.DataFrame with the data from the file.
+    """
+    try:
+        match request_format:
+            case "json":
+                return pd.read_json(filename)
+            case "csv":
+                return pd.read_csv(filename)
+            case _:
+                raise ValueError("Unsupported format. Only 'json' and 'csv' are supported.")
+    except MemoryError as exc:
+        raise RuntimeError("MemoryError: Insuficient memory to read the file. Consider reading file in batches using Pandas or Polars.") from exc
+        
