@@ -239,6 +239,7 @@ def _read_downloaded_file(filename: Path, request_format):
 
     Raises:
         ValueError: When an unsupported format is passed.
+        MemoryError: When there is not enough memory to read the file.
 
     Returns:
         pd.DataFrame: Returns a pd.DataFrame with the data from the file.
@@ -252,5 +253,4 @@ def _read_downloaded_file(filename: Path, request_format):
             case _:
                 raise ValueError("Unsupported format. Only 'json' and 'csv' are supported.")
     except MemoryError as exc:
-        raise RuntimeError("MemoryError: Insuficient memory to read the file. Consider reading file in batches using Pandas or Polars.") from exc
-        
+        raise MemoryError("MemoryError: Insuficient memory to read the file. Consider reading file in batches using Pandas or Polars.") from exc
