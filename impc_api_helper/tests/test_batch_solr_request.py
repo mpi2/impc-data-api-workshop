@@ -7,6 +7,7 @@ from impc_api_helper.batch_solr_request import (
     solr_request,
     _batch_to_df,
     _solr_downloader,
+    _read_downloaded_file
 )
 from impc_api_helper.utils.warnings import RowsParamIgnored
 import json
@@ -635,3 +636,59 @@ class TestHelpersSolrBatchRequest:
                     }
                 ).reset_index(drop=True),
             )
+
+    # Fixture to create a temporary file for use in tests
+    @pytest.fixture
+    def temp_file_fixture(self, tmp_path):
+        temp_dir = tmp_path / "temp_dir"
+        temp_dir.mkdir()
+        filename = "test_file"
+        return temp_dir / filename
+    
+    @pytest.mark.parametrize(
+            "request_format,content",
+            [
+                (
+                    "json",
+                    '[{"id": "1", "city": "Cape Town"},{"id": "2", "city": "Prague"}]',
+                ),
+                (
+                    "csv",
+                    'id,city\n1,Cape Town\n2,Prague\n',
+                ),
+                (
+                    "tsv",
+                    'id\tcity1\tCape Town2\tPrague'
+                )
+            ]
+    )
+    def test_read_downloaded_file(self, tmp_path, request_format, content, temp_file_fixture):
+        
+        # Write the file with corresponding content
+        temp_file_fixture.write_text(content)
+
+        if (request_format != "json") & (request_format != "csv"):
+            with pytest.raises(ValueError):
+                _read_downloaded_file(temp_file_fixture, request_format)
+        else:
+            test_df = _read_downloaded_file(temp_file_fixture, request_format)
+
+            # Assert the structure of the final df
+            assert_frame_equal(
+                test_df,
+                pd.DataFrame(
+                    {
+                        "id": [1, 2],
+                        "city": ["Cape Town", "Prague"],
+                    }
+                ).reset_index(drop=True),
+            )
+
+    def test_read_downloaded_file_memory_error(self, temp_file_fixture):
+        content = "id,city\n1,Cape Town\n2,Prague\n"
+        temp_file_fixture.write_text(content)
+        
+        # Create a mock that raises a memory error when called
+        with patch("pandas.read_csv", side_effect=MemoryError("Mock MemoryError")):
+            with pytest.raises(MemoryError, match="Insuficient memory to read the file."):
+                _ = _read_downloaded_file(temp_file_fixture, "csv")
