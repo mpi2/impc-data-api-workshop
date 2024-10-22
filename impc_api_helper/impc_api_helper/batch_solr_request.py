@@ -6,11 +6,14 @@ from tqdm import tqdm
 from .solr_request import solr_request
 from pathlib import Path
 import warnings
-from impc_api_helper.utils.warnings import warning_config, RowsParamIgnored, UnsupportedDownloadFormatError
+from impc_api_helper.utils.warnings import (
+    warning_config,
+    RowsParamIgnored,
+    UnsupportedDownloadFormatError,
+)
 from impc_api_helper.utils.validators import DownloadFormatValidator
 # from .utils.warnings import warning_config, RowsParamIgnored, UnsupportedDownloadFormatError
 # from .utils.validators import DownloadFormatValidator
-
 
 
 # Initialise warning config
@@ -41,8 +44,9 @@ def batch_solr_request(
     # If params["rows"] is passed, the user is warned about no effect
     if params.get("rows") is not None:
         warnings.warn(
-                message='The "rows" param will be ignored in batch_solr_request. To set a batch size, specify a "batch_size" argument.',
-                category=RowsParamIgnored)
+            message='The "rows" param will be ignored in batch_solr_request. To set a batch size, specify a "batch_size" argument.',
+            category=RowsParamIgnored,
+        )
 
     # Set params for batch request
     params["start"] = 0  # Start at the first result
@@ -74,7 +78,7 @@ def batch_solr_request(
     )
     print(f"Number of found documents: {num_results}")
 
-    # # Download only logic    
+    # # Download only logic
     # If user decides to download, a generator is used to fetch data in batches without storing results in memory.
     if download:
         try:
@@ -91,7 +95,7 @@ def batch_solr_request(
             raise e
         except Exception as e:
             raise (f"An error ocurred while downloading the data:{e}")
-            
+
             # Try to read the downloaded file
         try:
             print("Reading downloaded file...")
@@ -141,7 +145,6 @@ def _batch_to_df(core, params, num_results):
     # Request chunks until we have complete data.
     with tqdm(total=num_results) as pbar:
         while start < num_results:
-
             # Request chunk. We don't need num_results anymore because it does not change.
             _, df_chunk = solr_request(
                 core=core,
@@ -214,7 +217,6 @@ def _solr_downloader(params, filename, solr_generator):
         solr_generator ([dict, str]): Generator object with the results.
     """
     with open(filename, "w", encoding="UTF-8") as f:
-
         if params.get("wt") == "json":
             f.write("[\n")
             first_chunk = True
@@ -242,7 +244,7 @@ def _solr_downloader(params, filename, solr_generator):
 
 # File reader
 def _read_downloaded_file(filename: Path, request_format):
-    """ Wrapper for reading files into Pandas DataFrames
+    """Wrapper for reading files into Pandas DataFrames
 
     Args:
         filename (Path): Name of the file to read
@@ -261,4 +263,6 @@ def _read_downloaded_file(filename: Path, request_format):
             case "csv":
                 return pd.read_csv(filename)
     except MemoryError as exc:
-        raise MemoryError("MemoryError: Insuficient memory to read the file. Consider reading file in batches using Pandas or Polars.") from exc
+        raise MemoryError(
+            "MemoryError: Insuficient memory to read the file. Consider reading file in batches using Pandas or Polars."
+        ) from exc

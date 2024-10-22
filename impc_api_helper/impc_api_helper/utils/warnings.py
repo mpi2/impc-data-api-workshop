@@ -26,7 +26,7 @@ def warning_config():
     """Customises formatting and filters for warnings"""
 
     def custom_warning(message, category, filename, lineno, line=None):
-        return f'{category.__name__}: {message}\n'
+        return f"{category.__name__}: {message}\n"
 
     warnings.formatwarning = custom_warning
     warnings.simplefilter("always", Warning)

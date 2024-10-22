@@ -7,9 +7,12 @@ from impc_api_helper.batch_solr_request import (
     solr_request,
     _batch_to_df,
     _solr_downloader,
-    _read_downloaded_file
+    _read_downloaded_file,
 )
-from impc_api_helper.utils.warnings import RowsParamIgnored, UnsupportedDownloadFormatError
+from impc_api_helper.utils.warnings import (
+    RowsParamIgnored,
+    UnsupportedDownloadFormatError,
+)
 import json
 import pandas as pd
 from pandas.testing import assert_frame_equal
@@ -17,16 +20,22 @@ from pandas.testing import assert_frame_equal
 
 # When rows is passed to batch solr request, a warning is raised.
 # Let's ignore this warning in all tests except the one that asserts the warning
-pytestmark = pytest.mark.filterwarnings("ignore::impc_api_helper.utils.warnings.RowsParamIgnored")
+pytestmark = pytest.mark.filterwarnings(
+    "ignore::impc_api_helper.utils.warnings.RowsParamIgnored"
+)
+
 
 # Fixture containing the core
 @pytest.fixture
 def core():
     return "test_core"
 
+
 # Fixture to create a temporary file for use in tests
 @pytest.fixture(scope="function")
-def temp_file_fixture(tmp_path,):
+def temp_file_fixture(
+    tmp_path,
+):
     temp_dir = tmp_path / "temp_dir"
     temp_dir.mkdir(exist_ok=True)
     return temp_dir / "test_file"
@@ -37,7 +46,7 @@ class TestBatchSolrRequest:
     @pytest.fixture
     def common_params(self):
         return {"start": 0, "rows": 0, "wt": "json"}
-    
+
     # Fixture mocking solr_request within the batch_solr_request module.
     # solr_request will be mocked with different values for numFound, therefore it is passed as param
     @pytest.fixture
@@ -62,7 +71,9 @@ class TestBatchSolrRequest:
         self, mock_solr_request, core, common_params, capsys, mock_batch_to_df
     ):
         # Call tested function
-        result = batch_solr_request(core, params=common_params, download=False, batch_size=100)
+        result = batch_solr_request(
+            core, params=common_params, download=False, batch_size=100
+        )
 
         # Assert the value of params was changed to batch_size
         assert common_params["rows"] == 100
@@ -146,9 +157,7 @@ class TestBatchSolrRequest:
     # Fixture mocking _batch_solr_generator
     @pytest.fixture
     def mock_batch_solr_generator(self):
-        with patch(
-            "impc_api_helper.batch_solr_request._batch_solr_generator"
-        ) as mock:
+        with patch("impc_api_helper.batch_solr_request._batch_solr_generator") as mock:
             yield mock
 
     # Fixture mocking _solr_downloader. Yields a tmp_path to write a file for the duration of the test.
@@ -178,7 +187,7 @@ class TestBatchSolrRequest:
         ],
     )
     # This test should check the correct helper functions and print statements are called.
-    # Calling the API and writing the file are tested within the helpers. 
+    # Calling the API and writing the file are tested within the helpers.
     def test_batch_solr_request_download_true(
         self,
         core,
@@ -189,9 +198,8 @@ class TestBatchSolrRequest:
         params_format,
         format,
         file_content,
-        temp_file_fixture
+        temp_file_fixture,
     ):
-        
         # Write the file with corresponding content
         file_and_format = f"{temp_file_fixture}.{format}"
         Path(file_and_format).write_text(file_content)
@@ -199,7 +207,11 @@ class TestBatchSolrRequest:
         # First we call the function
         # We patch solr_request to get the number of docs
         result = batch_solr_request(
-            core, params=params_format, download=True, filename=temp_file_fixture, batch_size=2000000
+            core,
+            params=params_format,
+            download=True,
+            filename=temp_file_fixture,
+            batch_size=2000000,
         )
         num_found = mock_solr_request.return_value[0]
 
@@ -234,11 +246,12 @@ class TestBatchSolrRequest:
             ).reset_index(drop=True),
         )
 
-  
     # Test the download validates parameters
     # Mock response for test containing 2,000,000 docs
     @pytest.mark.parametrize("mock_solr_request", [2000000], indirect=True)
-    def test_batch_solr_request_download_true_validate_params_wt(self, core, mock_solr_request):
+    def test_batch_solr_request_download_true_validate_params_wt(
+        self, core, mock_solr_request
+    ):
         # Set a filename for the test
         filename = f"{core}"
         params = {"start": 0, "rows": 0, "wt": "wrong_format"}
@@ -246,8 +259,13 @@ class TestBatchSolrRequest:
         # Assert exception when the format is unsupported
         if format != "json" and format != "csv":
             with pytest.raises(UnsupportedDownloadFormatError):
-                batch_solr_request(core, params=params, download=True, filename=filename, batch_size=2000000)
-
+                batch_solr_request(
+                    core,
+                    params=params,
+                    download=True,
+                    filename=filename,
+                    batch_size=2000000,
+                )
 
     # Test download - multiple fields - large and small
     # Mock params for a multiple field query
@@ -268,7 +286,6 @@ class TestBatchSolrRequest:
         "download_bool",
         [(True), (False)],
     )
-
     def test_batch_solr_request_multiple_fields(
         self,
         core,
@@ -292,7 +309,6 @@ class TestBatchSolrRequest:
         # Call test function
         # If download==True, create a temporary file and call with the path_to_download
         if download_bool:
-
             # Write the file with corresponding content
             file_content = '[{"id": "1", "city": "Cape Town"}]\n'
             file_and_format = f"{temp_file_fixture}.json"
@@ -307,7 +323,10 @@ class TestBatchSolrRequest:
         else:
             # Otherwise, call without the path_to_download
             result = batch_solr_request(
-                core, params=multiple_field_params, download=download_bool, batch_size=5000
+                core,
+                params=multiple_field_params,
+                download=download_bool,
+                batch_size=5000,
             )
 
         # Check output which should be equal for both.
@@ -324,7 +343,9 @@ class TestBatchSolrRequest:
 
             # Check _solr_downloader gets called once with correct args
             mock_solr_downloader.assert_called_once_with(
-                multiple_field_params, Path(file_and_format), mock_batch_solr_generator.return_value
+                multiple_field_params,
+                Path(file_and_format),
+                mock_batch_solr_generator.return_value,
             )
 
             # Check the function returns a df with expected content
@@ -354,15 +375,14 @@ class TestBatchSolrRequest:
             assert result is not None
             assert isinstance(result, pd.DataFrame) is True
 
-
     # Test the warning when params["rows"] is passed
-    @pytest.mark.filterwarnings("default::impc_api_helper.utils.warnings.RowsParamIgnored")
+    @pytest.mark.filterwarnings(
+        "default::impc_api_helper.utils.warnings.RowsParamIgnored"
+    )
     @pytest.mark.parametrize("mock_solr_request", [10000], indirect=True)
     def test_param_rows_warning(core, common_params, mock_solr_request):
         with pytest.warns(RowsParamIgnored):
-            batch_solr_request(
-                        core, params=common_params
-                    )
+            batch_solr_request(core, params=common_params)
 
 
 # Have helper functions in a different class to separate fixtures and parameters
@@ -424,7 +444,6 @@ class TestHelpersSolrBatchRequest:
     def test_batch_to_df(
         self, core, batch_params, num_found, mock_solr_request_generator, batch_size
     ):
-    
         # Call the tested function
         df = _batch_to_df(core, batch_params, num_found)
 
@@ -491,7 +510,6 @@ class TestHelpersSolrBatchRequest:
 
             yield mock_get
 
-
     # Fixture containing the params for batch_solr_generator
     @pytest.fixture
     def batch_solr_generator_params(self):
@@ -549,7 +567,11 @@ class TestHelpersSolrBatchRequest:
             # Since the function
             mock_requests_get.assert_called_with(
                 "https://www.ebi.ac.uk/mi/impc/solr/test_core/select",
-                params={**batch_solr_generator_params, "start": idx, "rows": batch_size},
+                params={
+                    **batch_solr_generator_params,
+                    "start": idx,
+                    "rows": batch_size,
+                },
                 timeout=10,
             )
 
@@ -681,23 +703,20 @@ class TestHelpersSolrBatchRequest:
                 ).reset_index(drop=True),
             )
 
-    
-    
     @pytest.mark.parametrize(
-            "request_format,content",
-            [
-                (
-                    "json",
-                    '[{"id": "1", "city": "Cape Town"},{"id": "2", "city": "Prague"}]',
-                ),
-                (
-                    "csv",
-                    'id,city\n1,Cape Town\n2,Prague\n',
-                )
-            ]
+        "request_format,content",
+        [
+            (
+                "json",
+                '[{"id": "1", "city": "Cape Town"},{"id": "2", "city": "Prague"}]',
+            ),
+            (
+                "csv",
+                "id,city\n1,Cape Town\n2,Prague\n",
+            ),
+        ],
     )
     def test_read_downloaded_file(self, request_format, content, temp_file_fixture):
-        
         # Write the file with corresponding content
         temp_file_fixture.write_text(content)
 
@@ -717,8 +736,10 @@ class TestHelpersSolrBatchRequest:
     def test_read_downloaded_file_memory_error(self, temp_file_fixture):
         content = "id,city\n1,Cape Town\n2,Prague\n"
         temp_file_fixture.write_text(content)
-        
+
         # Create a mock that raises a memory error when called
         with patch("pandas.read_csv", side_effect=MemoryError("Mock MemoryError")):
-            with pytest.raises(MemoryError, match="Insuficient memory to read the file."):
+            with pytest.raises(
+                MemoryError, match="Insuficient memory to read the file."
+            ):
                 _ = _read_downloaded_file(temp_file_fixture, "csv")
