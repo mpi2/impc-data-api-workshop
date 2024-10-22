@@ -10,7 +10,6 @@ from impc_api_helper.utils.warnings import (
     InvalidFieldWarning,
     UnsupportedDownloadFormatError,
 )
-# from .warnings import warning_config, InvalidCoreWarning, InvalidFieldWarning, UnsupportedDownloadFormatError
 
 # Initialise warning config
 warning_config()

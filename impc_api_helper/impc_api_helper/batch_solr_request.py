@@ -12,8 +12,6 @@ from impc_api_helper.utils.warnings import (
     UnsupportedDownloadFormatError,
 )
 from impc_api_helper.utils.validators import DownloadFormatValidator
-# from .utils.warnings import warning_config, RowsParamIgnored, UnsupportedDownloadFormatError
-# from .utils.validators import DownloadFormatValidator
 
 
 # Initialise warning config
