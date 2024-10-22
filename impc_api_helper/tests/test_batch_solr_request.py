@@ -9,7 +9,7 @@ from impc_api_helper.batch_solr_request import (
     _solr_downloader,
     _read_downloaded_file
 )
-from impc_api_helper.utils.warnings import RowsParamIgnored
+from impc_api_helper.utils.warnings import RowsParamIgnored, UnsupportedDownloadFormatError
 import json
 import pandas as pd
 from pandas.testing import assert_frame_equal
@@ -184,6 +184,7 @@ class TestBatchSolrRequest:
         format,
         file_content,
     ):
+        
         # Set a filename for the test
         filename = f"{core}"
 
@@ -216,7 +217,21 @@ class TestBatchSolrRequest:
         # Check the function returns None
         assert result is None
 
-    # Test download - multiple fields - large and small
+  
+    # Test the download validates parameters
+    # Mock response for test containing 2,000,000 docs
+    @pytest.mark.parametrize("mock_solr_request", [2000000], indirect=True)
+    def test_batch_solr_request_download_true_validate_params_wt(self, core, mock_solr_request):
+        # Set a filename for the test
+        filename = f"{core}"
+        params = {"start": 0, "rows": 0, "wt": "wrong_format"}
+
+        # Assert exception when the format is unsupported
+        if format != "json" and format != "csv":
+            with pytest.raises(UnsupportedDownloadFormatError):
+                batch_solr_request(core, params=params, download=True, filename=filename, batch_size=2000000)
+
+      # Test download - multiple fields - large and small
     # Mock params for a multiple field query
     @pytest.fixture
     def multiple_field_params(self):
@@ -655,34 +670,26 @@ class TestHelpersSolrBatchRequest:
                 (
                     "csv",
                     'id,city\n1,Cape Town\n2,Prague\n',
-                ),
-                (
-                    "tsv",
-                    'id\tcity1\tCape Town2\tPrague'
                 )
             ]
     )
-    def test_read_downloaded_file(self, tmp_path, request_format, content, temp_file_fixture):
+    def test_read_downloaded_file(self, request_format, content, temp_file_fixture):
         
         # Write the file with corresponding content
         temp_file_fixture.write_text(content)
 
-        if (request_format != "json") & (request_format != "csv"):
-            with pytest.raises(ValueError):
-                _read_downloaded_file(temp_file_fixture, request_format)
-        else:
-            test_df = _read_downloaded_file(temp_file_fixture, request_format)
+        test_df = _read_downloaded_file(temp_file_fixture, request_format)
 
-            # Assert the structure of the final df
-            assert_frame_equal(
-                test_df,
-                pd.DataFrame(
-                    {
-                        "id": [1, 2],
-                        "city": ["Cape Town", "Prague"],
-                    }
-                ).reset_index(drop=True),
-            )
+        # Assert the structure of the final df
+        assert_frame_equal(
+            test_df,
+            pd.DataFrame(
+                {
+                    "id": [1, 2],
+                    "city": ["Cape Town", "Prague"],
+                }
+            ).reset_index(drop=True),
+        )
 
     def test_read_downloaded_file_memory_error(self, temp_file_fixture):
         content = "id,city\n1,Cape Town\n2,Prague\n"
