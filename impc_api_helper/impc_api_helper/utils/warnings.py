@@ -5,11 +5,11 @@ import warnings
 
 # Custom warnings
 class InvalidCoreWarning(Warning):
-    """Exception raised when the core is not in the expected core names"""
+    """Warning raised when the core is not in the expected core names"""
 
 
 class InvalidFieldWarning(Warning):
-    """Exception raised when the field name is not in the expected fields"""
+    """Warning raised when the field name is not in the expected fields"""
 
 
 class RowsParamIgnored(Warning):
