@@ -24,6 +24,13 @@ pytestmark = pytest.mark.filterwarnings("ignore::impc_api_helper.utils.warnings.
 def core():
     return "test_core"
 
+# Fixture to create a temporary file for use in tests
+@pytest.fixture(scope="function")
+def temp_file_fixture(tmp_path,):
+    temp_dir = tmp_path / "temp_dir"
+    temp_dir.mkdir(exist_ok=True)
+    return temp_dir / "test_file"
+
 
 class TestBatchSolrRequest:
     # Fixture containing the params of a normal batch_solr_request
@@ -179,19 +186,20 @@ class TestBatchSolrRequest:
         mock_solr_request,
         mock_batch_solr_generator,
         mock_solr_downloader,
-        tmp_path,
         params_format,
         format,
         file_content,
+        temp_file_fixture
     ):
         
-        # Set a filename for the test
-        filename = f"{core}"
+        # Write the file with corresponding content
+        file_and_format = f"{temp_file_fixture}.{format}"
+        Path(file_and_format).write_text(file_content)
 
         # First we call the function
         # We patch solr_request to get the number of docs
         result = batch_solr_request(
-            core, params=params_format, download=True, filename=filename, batch_size=2000000
+            core, params=params_format, download=True, filename=temp_file_fixture, batch_size=2000000
         )
         num_found = mock_solr_request.return_value[0]
 
@@ -206,16 +214,25 @@ class TestBatchSolrRequest:
         # Check _solr_downloader gets called once with correct args
         # Checks the filename is a Path and has the corresponding format
         mock_solr_downloader.assert_called_once_with(
-            params_format, Path(f"{filename}.{format}"), mock_batch_solr_generator.return_value
+            params_format, Path(file_and_format), mock_batch_solr_generator.return_value
         )
 
         # Check the print statements
         captured = capsys.readouterr()
         assert f"Number of found documents: {num_found}" in captured.out
-        assert f"File saved as: {filename}.{format}" in captured.out
+        assert f"File saved as: {file_and_format}" in captured.out
 
-        # Check the function returns None
-        assert result is None
+        # Check the function returns a df with expected content
+        # Assert the structure of the final df
+        assert_frame_equal(
+            result,
+            pd.DataFrame(
+                {
+                    "id": [1, 2],
+                    "city": ["Houston", "Prague"],
+                }
+            ).reset_index(drop=True),
+        )
 
   
     # Test the download validates parameters
@@ -231,7 +248,8 @@ class TestBatchSolrRequest:
             with pytest.raises(UnsupportedDownloadFormatError):
                 batch_solr_request(core, params=params, download=True, filename=filename, batch_size=2000000)
 
-      # Test download - multiple fields - large and small
+
+    # Test download - multiple fields - large and small
     # Mock params for a multiple field query
     @pytest.fixture
     def multiple_field_params(self):
@@ -262,7 +280,7 @@ class TestBatchSolrRequest:
         monkeypatch,
         mock_batch_to_df,
         mock_solr_downloader,
-        tmp_path,
+        temp_file_fixture,
     ):
         # This test should ensure the request is formatted properly. Regardless of going to downloads or to _batch_to_df
         # Retrieve  num_found
@@ -274,16 +292,17 @@ class TestBatchSolrRequest:
         # Call test function
         # If download==True, create a temporary file and call with the path_to_download
         if download_bool:
-            # temp_dir = tmp_path / "temp_dir"
-            filename = f"{core}"
-            # temp_file = temp_dir / f"{core}.json"
-            # temp_file.write_text('{"id": "1", "city": "Cape Town"}\n')
+
+            # Write the file with corresponding content
+            file_content = '[{"id": "1", "city": "Cape Town"}]\n'
+            file_and_format = f"{temp_file_fixture}.json"
+            Path(file_and_format).write_text(file_content)
 
             result = batch_solr_request(
                 core,
                 params=multiple_field_params,
                 download=download_bool,
-                filename=filename,
+                filename=temp_file_fixture,
             )
         else:
             # Otherwise, call without the path_to_download
@@ -305,10 +324,20 @@ class TestBatchSolrRequest:
 
             # Check _solr_downloader gets called once with correct args
             mock_solr_downloader.assert_called_once_with(
-                multiple_field_params, Path(f"{filename}.json"), mock_batch_solr_generator.return_value
+                multiple_field_params, Path(file_and_format), mock_batch_solr_generator.return_value
             )
-            # Check the function returns None
-            assert result is None
+
+            # Check the function returns a df with expected content
+            # Assert the structure of the final df
+            assert_frame_equal(
+                result,
+                pd.DataFrame(
+                    {
+                        "id": [1],
+                        "city": ["Cape Town"],
+                    }
+                ).reset_index(drop=True),
+            )
 
         # Otherwise, use the 'y' input at the start of the test and make sure the required function is executed.
         if not download_bool and num_found == 2000000:
@@ -652,13 +681,7 @@ class TestHelpersSolrBatchRequest:
                 ).reset_index(drop=True),
             )
 
-    # Fixture to create a temporary file for use in tests
-    @pytest.fixture
-    def temp_file_fixture(self, tmp_path):
-        temp_dir = tmp_path / "temp_dir"
-        temp_dir.mkdir()
-        filename = "test_file"
-        return temp_dir / filename
+    
     
     @pytest.mark.parametrize(
             "request_format,content",
