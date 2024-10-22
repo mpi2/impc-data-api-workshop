@@ -75,7 +75,6 @@ class CoreParamsValidator(BaseModel):
         field_list: List[str] = get_fields(fields)
 
         # Validate each field in params
-        # TODO: perhaps pass al invalid fields as a list, instead of many warning messages
         if invalid_core is not True:
             for fl in field_list:
                 if fl not in jv.valid_fields(core):
