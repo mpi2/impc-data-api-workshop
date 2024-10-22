@@ -16,6 +16,11 @@ class RowsParamIgnored(Warning):
     """Warning raised when the row param is ignored"""
 
 
+# custom exceptions
+class UnsupportedDownloadFormatError(Exception):
+    """Exception raised when the format is not supported for download"""
+
+
 # Custom warning function
 def warning_config():
     """Customises formatting and filters for warnings"""

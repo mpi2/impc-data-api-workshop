@@ -1,11 +1,11 @@
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, model_validator, field_validator
 import json
 from typing import List, Dict
 from pathlib import Path
 import warnings
 from dataclasses import dataclass, field
-from impc_api_helper.utils.warnings import warning_config, InvalidCoreWarning, InvalidFieldWarning
-# from .warnings import warning_config, InvalidCoreWarning, InvalidFieldWarning
+from impc_api_helper.utils.warnings import warning_config, InvalidCoreWarning, InvalidFieldWarning, UnsupportedDownloadFormatError
+# from .warnings import warning_config, InvalidCoreWarning, InvalidFieldWarning, UnsupportedDownloadFormatError
 
 # Initialise warning config
 warning_config()
@@ -77,3 +77,15 @@ class CoreParamsValidator(BaseModel):
                     category=InvalidFieldWarning)
         # Return validated values
         return values
+
+
+class DownloadFormatValidator(BaseModel):
+    """Validates params["wt"] from a batch_request"""
+    wt: str
+
+    @field_validator('wt')
+    def validate_wt(cls, value):
+        supported_formats = {'json', 'csv'}
+        if value not in supported_formats:
+            raise UnsupportedDownloadFormatError(f"Unsupported format '{value}'. Only {supported_formats} are supported for download.")
+        return value

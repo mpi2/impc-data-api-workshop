@@ -6,8 +6,11 @@ from tqdm import tqdm
 from .solr_request import solr_request
 from pathlib import Path
 import warnings
-from impc_api_helper.utils.warnings import warning_config, RowsParamIgnored
-# from .utils.warnings import warning_config, RowsParamIgnored
+from impc_api_helper.utils.warnings import warning_config, RowsParamIgnored, UnsupportedDownloadFormatError
+from impc_api_helper.utils.validators import DownloadFormatValidator
+# from .utils.warnings import warning_config, RowsParamIgnored, UnsupportedDownloadFormatError
+# from .utils.validators import DownloadFormatValidator
+
 
 
 # Initialise warning config
@@ -71,22 +74,30 @@ def batch_solr_request(
     )
     print(f"Number of found documents: {num_results}")
 
-    # Download only logic
+    # # Download only logic    
     # If user decides to download, a generator is used to fetch data in batches without storing results in memory.
     if download:
         try:
+            # Check if the format is supported
+            DownloadFormatValidator(wt=params["wt"])
+
             # Implement loop behaviour
             print("Downloading file...")
             filename_path = Path(f"{filename}.{params['wt']}")
             gen = _batch_solr_generator(core, params, num_results)
             _solr_downloader(params, filename_path, gen)
             print(f"File saved as: {filename_path}")
+        except UnsupportedDownloadFormatError as e:
+            raise e
+        except Exception as e:
+            raise (f"An error ocurred while downloading the data:{e}")
             
             # Try to read the downloaded file
+        try:
             print("Reading downloaded file...")
             return _read_downloaded_file(filename_path, params["wt"])
         except Exception as e:
-            print(f"An unexpected error occured:{e}")
+            raise Exception(f"An unexpected error occured:{e}")
 
     # If the number of results is small enough and download is off, it's okay to show as df
     if num_results < 1000000 and not download:
@@ -238,7 +249,6 @@ def _read_downloaded_file(filename: Path, request_format):
         request_format (str): Format of the file to read. Only 'json' and 'csv' are supported.
 
     Raises:
-        ValueError: When an unsupported format is passed.
         MemoryError: When there is not enough memory to read the file.
 
     Returns:
@@ -250,7 +260,5 @@ def _read_downloaded_file(filename: Path, request_format):
                 return pd.read_json(filename)
             case "csv":
                 return pd.read_csv(filename)
-            case _:
-                raise ValueError("Unsupported format. Only 'json' and 'csv' are supported.")
     except MemoryError as exc:
         raise MemoryError("MemoryError: Insuficient memory to read the file. Consider reading file in batches using Pandas or Polars.") from exc
