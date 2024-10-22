@@ -16,7 +16,7 @@ The available functions can be imported as:
 from impc_api_helper import solr_request, batch_solr_request
 ```
 
-### Solr request
+## 1. Solr request
 The most basic request to the IMPC solr API
 ```
 num_found, df = solr_request( core='genotype-phenotype', params={
@@ -27,7 +27,7 @@ num_found, df = solr_request( core='genotype-phenotype', params={
 )
 ```
 
-#### Facet request
+### a. Facet request
 `solr_request` allows facet requests
 
 ```
@@ -44,15 +44,11 @@ num_found, df = solr_request(
  )
 ```
 
-#### Solr request validation
-A common pitfall when writing a query is the misspelling of `core` and `fields` arguments. For this, we have included an `validate` argument that raises a warning when these values are not as expected. Note this does not prevent you from executing a query; it just alerts you to a potential issue.
+### b. Solr request validation
+A common pitfall when writing a query is the misspelling of `core` and `fields` arguments. For this, we have included a `validate` argument that raises a warning when these values are not as expected. Note this does not prevent you from executing a query; it just alerts you to a potential issue.
 
-##### Core validation
-=======
-#### Solr request validation
-A common pitfall when writing a query is the misspelling of `core` and `fields` arguments. For this, we have included an `validate` argument that raises a warning when these values are not as expected. Note this does not prevent you from executing a query; it just alerts you to a potential issue.
 
-##### Core validation
+#### Core validation
 ```
 num_found, df = solr_request( core='invalid_core', params={
         'q': '*:*',
@@ -65,7 +61,7 @@ num_found, df = solr_request( core='invalid_core', params={
 > dict_keys(['experiment', 'genotype-phenotype', 'impc_images', 'phenodigm', 'statistical-result']))
 ```
 
-##### Field list validation
+#### Field list validation
 ```
 num_found, df = solr_request( core='genotype-phenotype', params={
         'q': '*:*',
@@ -78,66 +74,7 @@ num_found, df = solr_request( core='genotype-phenotype', params={
 > To see expected fields check the documentation at: https://www.ebi.ac.uk/mi/impc/solrdoc/
 ```
 
-### Batch request
-For larger requests, use the batch request function to query the API responsibly.
-
-```
-num_found, df = solr_request( core='invalid_core', params={
-        'q': '*:*',
-        'rows': 10
-    },
-    validate=True
-)
-
-> InvalidCoreWarning: Invalid core: "genotype-phenotyp", select from the available cores:
-> dict_keys(['experiment', 'genotype-phenotype', 'impc_images', 'phenodigm', 'statistical-result']))
-```
-
-##### Field list validation
-```
-num_found, df = solr_request( core='genotype-phenotype', params={
-        'q': '*:*',
-        'rows': 10,
-        'fl': 'invalid_field,marker_symbol,allele_symbol'
-    },
-    validate=True
-)
-> InvalidFieldWarning: Unexpected field name: "invalid_field". Check the spelling of fields.
-> To see expected fields check the documentation at: https://www.ebi.ac.uk/mi/impc/solrdoc/
-```
-
-#### Solr request validation
-A common pitfall when writing a query is the misspelling of `core` and `fields` arguments. For this, we have included an `validate` argument that raises a warning when these values are not as expected. Note this does not prevent you from executing a query; it just alerts you to a potential issue.
-
-##### Core validation
-```
-num_found, df = solr_request( core='invalid_core', params={
-        'q': '*:*',
-        'rows': 10
-    },
-    validate=True
-)
-
-> InvalidCoreWarning: Invalid core: "genotype-phenotyp", select from the available cores:
-> dict_keys(['experiment', 'genotype-phenotype', 'impc_images', 'phenodigm', 'statistical-result']))
-```
-
-##### Field list validation
-```
-num_found, df = solr_request( core='genotype-phenotype', params={
-        'q': '*:*',
-        'rows': 10,
-        'fl': 'invalid_field,marker_symbol,allele_symbol'
-    },
-    validate=True
-)
-> InvalidFieldWarning: Unexpected field name: "invalid_field". Check the spelling of fields.
-> To see expected fields check the documentation at: https://www.ebi.ac.uk/mi/impc/solrdoc/
-```
-
-
-
-### Batch Solr Request
+## 2. Batch Solr Request
 `batch_solr_request` is available for large queries. This solves issues where a request is too large to fit into memory or where it puts a lot of strain on the API. 
 
 Use `batch_solr_request` for:
@@ -145,10 +82,10 @@ Use `batch_solr_request` for:
 - Querying multiple items in a list
 - Downloading data in `json` or `csv` format.
 
-#### Large queries
+### Large queries
 For large queries you can choose between seeing them in a DataFrame or downloading them in `json` or `csv` format.
 
-##### Large query - see in DataFrame
+### a. Large query - see in DataFrame
 This will fetch your data using the API responsibly and return a Pandas DataFrame
 
 When your request is larger than recommended and you have not opted for downloading the data, a warning will be presented and you should follow the instructions to proceed.
@@ -165,11 +102,12 @@ df = batch_solr_request(
 print(df.head())
 ```
 
-##### Large query - Download
-When using the `download=True` option, no DataFrame will be returned, instead a file with the requested information will be saved as `filename`. The format is selected based on the `wt` parameter.
+### b. Large query - Download
+When using the `download=True` option, a file with the requested information will be saved as `filename`. The format is selected based on the `wt` parameter.
+A DataFrame may be returned, provided it does not exceed the memory available on your laptop. If the DataFrame is too large, an error will be raised. For these cases, we recommend you read the downloaded file in batches/chunks.  
 
 ```
-batch_solr_request(
+df = batch_solr_request(
     core='genotype-phenotype',
     params={
         'q':'*:*',
@@ -177,11 +115,12 @@ batch_solr_request(
     },
     download=True,
     filename='geno_pheno_query',
-    batch_size=20000
+    batch_size=100000
 )
+print(df.head())
 ```
 
-#### Query by multiple values
+### c. Query by multiple values
 `batch_solr_request` also allows to search multiple items in a list provided they belong to them same field.
 Pass the list to the `field_list` param and specify the type of `fl` in `field_type`.
 
@@ -198,8 +137,8 @@ df = batch_solr_request(
         'field_type': 'marker_symbol'
     },
     download = False
-print(df.head())
 )
+print(df.head())
 ```
 This too can be downloaded
 
@@ -207,7 +146,7 @@ This too can be downloaded
 # List of gene symbols
 genes = ["Zfp580","Firrm","Gpld1","Mbip"]
 
-batch_solr_request(
+df = batch_solr_request(
     core='genotype-phenotype',
     params={
         'q':'*:*',
@@ -218,6 +157,7 @@ batch_solr_request(
     download = True,
     filename='gene_list_query'
 )
+print(df.head())
 ```
 
 
