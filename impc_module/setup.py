@@ -26,7 +26,7 @@ setup(
         ],
     },
     long_description=long_description,
-    long_description_content_type='text/markdown',
+    long_description_content_type='text/x-rst',
     # classifiers=[
     #     'Development Status :: 3 - Alpha',
     #     'Intended Audience :: IMPC data users',
