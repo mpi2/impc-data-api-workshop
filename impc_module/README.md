@@ -1,30 +1,37 @@
 # IMPC_API
-`impc_api` is a python package.
 
+`impc_api` is a python package.
+  
 The functions in this package are intended for use on a Jupyter Notebook.
+
 1. **Create a virtual environment (optional but recommended)**:
 On Mac:
  `python3 -m venv .venv`
- `source .venv/bin/activate` 
+ `source .venv/bin/activate`
 
-3.  **Install the package running**: `pip install impc_api`
-4. **Try it out**: Create a [Jupyter Notebook](https://jupyter.org/install#jupyter-notebook) and try some of the examples below:
+2. **Install the package running**: `pip install impc_api`
+3. **Try it out**: Create a [Jupyter Notebook](https://jupyter.org/install#jupyter-notebook) and try some of the examples below:
+
 ## Installing the package for the first time
+
 1. Clone the repository and navigate into it. Navigate into the package name until you can see `setup.py` and `pyproject.toml`
 2. Run `python3 -m build`, this builds the package, a couple of new files/folders will appear.
 3. Install the package running `pip install .`
 4. Try it out: Go to Jupyter Notebook and some examples below:
 
 ### Available functions
+
 The available functions can be imported as:
 
-```
+```python
 from impc_api import solr_request, batch_solr_request
 ```
 
 ## 1. Solr request
+
 The most basic request to the IMPC solr API
-```
+
+```python
 num_found, df = solr_request(
     core='genotype-phenotype', 
     params={
@@ -36,9 +43,10 @@ num_found, df = solr_request(
 ```
 
 ### a. Facet request
+
 `solr_request` allows facet requests
 
-```
+```python
 num_found, df = solr_request(
     core="genotype-phenotype",
     params={
@@ -53,10 +61,12 @@ num_found, df = solr_request(
 ```
 
 ### b. Solr request validation
+
 A common pitfall when writing a query is the misspelling of `core` and `fields` arguments. For this, we have included a `validate` argument that raises a warning when these values are not as expected. Note this does not prevent you from executing a query; it just alerts you to a potential issue.
 
 #### Core validation
-```
+
+```python
 num_found, df = solr_request(
     core='invalid_core',
     params={
@@ -71,7 +81,8 @@ num_found, df = solr_request(
 ```
 
 #### Field list validation
-```
+
+```python
 num_found, df = solr_request(
     core='genotype-phenotype',
     params={
@@ -86,22 +97,26 @@ num_found, df = solr_request(
 ```
 
 ## 2. Batch Solr Request
-`batch_solr_request` is available for large queries. This solves issues where a request is too large to fit into memory or where it puts a lot of strain on the API. 
+
+`batch_solr_request` is available for large queries. This solves issues where a request is too large to fit into memory or where it puts a lot of strain on the API.
 
 Use `batch_solr_request` for:
+
 - Large queries (>1,000,000)
 - Querying multiple items in a list
 - Downloading data in `json` or `csv` format.
 
 ### Large queries
+
 For large queries you can choose between seeing them in a DataFrame or downloading them in `json` or `csv` format.
 
 ### a. Large query - see in DataFrame
+
 This will fetch your data using the API responsibly and return a Pandas DataFrame
 
 When your request is larger than recommended and you have not opted for downloading the data, a warning will be presented and you should follow the instructions to proceed.
 
-```
+```python
 df = batch_solr_request(
     core='genotype-phenotype',
     params={
@@ -114,10 +129,11 @@ print(df.head())
 ```
 
 ### b. Large query - Download
+
 When using the `download=True` option, a file with the requested information will be saved as `filename`. The format is selected based on the `wt` parameter.
 A DataFrame may be returned, provided it does not exceed the memory available on your laptop. If the DataFrame is too large, an error will be raised. For these cases, we recommend you read the downloaded file in batches/chunks.  
 
-```
+```python
 df = batch_solr_request(
     core='genotype-phenotype',
     params={
@@ -132,10 +148,11 @@ print(df.head())
 ```
 
 ### c. Query by multiple values
+
 `batch_solr_request` also allows to search multiple items in a list provided they belong to them same field.
 Pass the list to the `field_list` param and specify the type of `fl` in `field_type`.
 
-```
+```python
 # List of gene symbols
 genes = ["Zfp580", "Firrm", "Gpld1", "Mbip"]
 
@@ -151,9 +168,10 @@ df = batch_solr_request(
 )
 print(df.head())
 ```
+
 This can be downloaded too:
 
-```
+```python
 # List of gene symbols
 genes = ["Zfp580", "Firrm", "Gpld1", "Mbip"]
 
@@ -170,4 +188,3 @@ df = batch_solr_request(
 )
 print(df.head())
 ```
-
