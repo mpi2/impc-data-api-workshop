@@ -21,10 +21,10 @@ jobs:
           python-version: "3.x"
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          python3 -m pip install --upgrade pip
           pip install setuptools wheel
       - name: Build package
         run: |
-          python impc_module/setup.py sdist bdist_wheel  # Could also be python -m build
+          python3 impc_module/setup.py sdist bdist_wheel  # Could also be python -m build
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
