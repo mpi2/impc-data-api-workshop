@@ -1,6 +1,10 @@
 from setuptools import setup, find_packages
 
 
+# Read the README file for the long description
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
 setup(
     name='impc_api',
     version='1.0.0',
@@ -21,6 +25,8 @@ setup(
             'pytest>=8.2.2',
         ],
     },
+    long_description=long_description,
+    long_description_content_type='text/x-rst',
     # classifiers=[
     #     'Development Status :: 3 - Alpha',
     #     'Intended Audience :: IMPC data users',
