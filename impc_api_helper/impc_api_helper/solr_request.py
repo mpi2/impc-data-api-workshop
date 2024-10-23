@@ -12,12 +12,12 @@ pd.set_option("display.max_columns", None)
 # Create helper function
 def solr_request(core, params, silent=False, validate=False):
     """Performs a single Solr request to the IMPC Solr API.
-    
+
     Args:
         core (str): name of IMPC solr core.
         params (dict): dictionary containing the API call parameters.
         silent (bool, optional): default False
-            If True, displays: URL of API call, the number of found docs 
+            If True, displays: URL of API call, the number of found docs
             and a portion of the DataFrame.
         validate (bool, optional): default False
             If True, validates the parameters against the core schema and raises warnings
@@ -37,7 +37,7 @@ def solr_request(core, params, silent=False, validate=False):
                 'fl': 'marker_symbol,allele_symbol,parameter_stable_id',  # Fields to retrieve.
             }
         )
-    
+
     Faceting query provides a summary of data distribution across the specified fields.
     Example faceting query:
         num_found, df = solr_request(
@@ -53,7 +53,7 @@ def solr_request(core, params, silent=False, validate=False):
         )
 
     When querying the phenodigm core, pass 'q': 'type:...'
-    Example phenodigm query: 
+    Example phenodigm query:
         num_found, df = solr_request(
             core='phenodigm',
             params={
@@ -64,10 +64,7 @@ def solr_request(core, params, silent=False, validate=False):
     """
 
     if validate:
-        CoreParamsValidator(
-            core=core,
-            params=params
-        )
+        CoreParamsValidator(core=core, params=params)
 
     base_url = "https://www.ebi.ac.uk/mi/impc/solr/"
     solr_url = base_url + core + "/select"
@@ -85,7 +82,7 @@ def solr_request(core, params, silent=False, validate=False):
             print(f"Number of found documents: {num_found}\n")
 
         # For faceting query.
-        if params.get('facet') == 'on':
+        if params.get("facet") == "on":
             df = _process_faceting(data, params)
 
         # For regular query.
@@ -131,8 +128,8 @@ def _process_faceting(data, params):
 
     # Convert the list of dictionaries into a DataFrame and print the DataFrame.
     df = pd.DataFrame.from_dict(
-            faceting_dict, orient="index", columns=["counts"]
-        ).reset_index()
+        faceting_dict, orient="index", columns=["counts"]
+    ).reset_index()
     # Rename the columns.
     df.columns = [params["facet.field"], "count_per_category"]
     return df
@@ -141,27 +138,27 @@ def _process_faceting(data, params):
 # Batch request based on solr_request.
 def batch_request(core, params, batch_size):
     """Calls `solr_request` multiple times with `params`
-    to retrieve results in chunk `batch_size` rows at a time.
+     to retrieve results in chunk `batch_size` rows at a time.
 
-    Passing parameter `rows` is ignored and replaced with `batch_size`
-   
-   Args:
-        core (str): name of IMPC solr core.
-        params (dict): dictionary containing the API call parameters.
-        batch_size (int): Size of batches (number of docs) per request.
+     Passing parameter `rows` is ignored and replaced with `batch_size`
 
-    Returns:
-        pandas.DataFrame: Pandas.DataFrame object with the information requested.
+    Args:
+         core (str): name of IMPC solr core.
+         params (dict): dictionary containing the API call parameters.
+         batch_size (int): Size of batches (number of docs) per request.
 
-    Example query:
-        df = batch_request(
-            core="genotype-phenotype",
-            params={
-                'q': 'top_level_mp_term_name:"cardiovascular system phenotype" AND effect_size:[* TO *] AND life_stage_name:"Late adult"',
-                'fl': 'allele_accession_id,life_stage_name,marker_symbol,mp_term_name,p_value,parameter_name,parameter_stable_id,phenotyping_center,statistical_method,top_level_mp_term_name,effect_size'
-            },
-            batch_size=100
-        )
+     Returns:
+         pandas.DataFrame: Pandas.DataFrame object with the information requested.
+
+     Example query:
+         df = batch_request(
+             core="genotype-phenotype",
+             params={
+                 'q': 'top_level_mp_term_name:"cardiovascular system phenotype" AND effect_size:[* TO *] AND life_stage_name:"Late adult"',
+                 'fl': 'allele_accession_id,life_stage_name,marker_symbol,mp_term_name,p_value,parameter_name,parameter_stable_id,phenotyping_center,statistical_method,top_level_mp_term_name,effect_size'
+             },
+             batch_size=100
+         )
     """
 
     if "rows" in "params":
