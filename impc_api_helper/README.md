@@ -1,5 +1,5 @@
 # IMPC_API_HELPER
-README for draft `impc_api_helper` python package.
+`impc_api_helper` is a python package.
 
 The functions in this package are intended for use on a Jupyter Notebook.
 
