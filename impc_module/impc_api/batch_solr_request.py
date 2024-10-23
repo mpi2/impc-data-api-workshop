@@ -6,12 +6,12 @@ from tqdm import tqdm
 from .solr_request import solr_request
 from pathlib import Path
 import warnings
-from impc_api_helper.utils.warnings import (
+from impc_api.utils.warnings import (
     warning_config,
     RowsParamIgnored,
     UnsupportedDownloadFormatError,
 )
-from impc_api_helper.utils.validators import DownloadFormatValidator
+from impc_api.utils.validators import DownloadFormatValidator
 
 
 # Initialise warning config

@@ -12,7 +12,7 @@ The package is build using [setuptools](https://setuptools.pypa.io/en/latest/use
 
 
 ```
-from impc_api_helper import solr_request
+from impc_api import solr_request
 num_found, df = solr_request( core='genotype-phenotype', params={
         'q': '*:*'
         'rows': 10

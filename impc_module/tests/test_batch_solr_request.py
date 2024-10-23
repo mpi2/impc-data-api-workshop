@@ -1,7 +1,7 @@
 import pytest
 from pathlib import Path
 from unittest.mock import patch, call, Mock
-from impc_api_helper.batch_solr_request import (
+from impc_api.batch_solr_request import (
     batch_solr_request,
     _batch_solr_generator,
     solr_request,
@@ -9,7 +9,7 @@ from impc_api_helper.batch_solr_request import (
     _solr_downloader,
     _read_downloaded_file,
 )
-from impc_api_helper.utils.warnings import (
+from impc_api.utils.warnings import (
     RowsParamIgnored,
     UnsupportedDownloadFormatError,
 )
@@ -21,7 +21,7 @@ from pandas.testing import assert_frame_equal
 # When rows is passed to batch solr request, a warning is raised.
 # Let's ignore this warning in all tests except the one that asserts the warning
 pytestmark = pytest.mark.filterwarnings(
-    "ignore::impc_api_helper.utils.warnings.RowsParamIgnored"
+    "ignore::impc_api.utils.warnings.RowsParamIgnored"
 )
 
 
@@ -51,7 +51,7 @@ class TestBatchSolrRequest:
     # solr_request will be mocked with different values for numFound, therefore it is passed as param
     @pytest.fixture
     def mock_solr_request(self, request):
-        with patch("impc_api_helper.batch_solr_request.solr_request") as mock:
+        with patch("impc_api.batch_solr_request.solr_request") as mock:
             # Mock expected return content of the solr_request (numFound and df)
             mock.return_value = (request.param, pd.DataFrame())
             yield mock
@@ -59,7 +59,7 @@ class TestBatchSolrRequest:
     # Fixture mocking _batch_to_df
     @pytest.fixture
     def mock_batch_to_df(self):
-        with patch("impc_api_helper.batch_solr_request._batch_to_df") as mock:
+        with patch("impc_api.batch_solr_request._batch_to_df") as mock:
             # Mock expected return content of the _batch_to_df (pd.DataFrame)
             mock.return_value = pd.DataFrame()
             yield mock
@@ -157,13 +157,13 @@ class TestBatchSolrRequest:
     # Fixture mocking _batch_solr_generator
     @pytest.fixture
     def mock_batch_solr_generator(self):
-        with patch("impc_api_helper.batch_solr_request._batch_solr_generator") as mock:
+        with patch("impc_api.batch_solr_request._batch_solr_generator") as mock:
             yield mock
 
     # Fixture mocking _solr_downloader. Yields a tmp_path to write a file for the duration of the test.
     @pytest.fixture
     def mock_solr_downloader(self, tmp_path):
-        with patch("impc_api_helper.batch_solr_request._solr_downloader") as mock:
+        with patch("impc_api.batch_solr_request._solr_downloader") as mock:
             temp_dir = Path(tmp_path) / "temp_dir"
             temp_dir.mkdir()
             yield mock
@@ -377,7 +377,7 @@ class TestBatchSolrRequest:
 
     # Test the warning when params["rows"] is passed
     @pytest.mark.filterwarnings(
-        "default::impc_api_helper.utils.warnings.RowsParamIgnored"
+        "default::impc_api.utils.warnings.RowsParamIgnored"
     )
     @pytest.mark.parametrize("mock_solr_request", [10000], indirect=True)
     def test_param_rows_warning(core, common_params, mock_solr_request):
@@ -408,7 +408,7 @@ class TestHelpersSolrBatchRequest:
         """Patches solr_request for _batch_to_df _batch_solr_generator producing a df dynamically.
         Creates a df in chunks (row by row) mocking incoming batches of responses.
         """
-        with patch("impc_api_helper.batch_solr_request.solr_request") as mock:
+        with patch("impc_api.batch_solr_request.solr_request") as mock:
             # Call the generator
             data_generator = self.data_generator()
 
@@ -473,7 +473,7 @@ class TestHelpersSolrBatchRequest:
     # Fixture to mock the requests module
     @pytest.fixture
     def mock_requests_get(self, request):
-        with patch("impc_api_helper.batch_solr_request.requests.get") as mock_get:
+        with patch("impc_api.batch_solr_request.requests.get") as mock_get:
             # Capture the format of the response
             wt = request.param["wt"]
             mock_get.return_value.format = wt
@@ -579,7 +579,7 @@ class TestHelpersSolrBatchRequest:
     # Fixture to mock requests.get returning a status code.
     @pytest.fixture
     def mock_requests_get_error(self, request):
-        with patch("impc_api_helper.batch_solr_request.requests.get") as mock_get:
+        with patch("impc_api.batch_solr_request.requests.get") as mock_get:
             mock_get.return_value.status_code = request.param
             yield mock_get
 

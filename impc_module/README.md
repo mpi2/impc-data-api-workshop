@@ -1,5 +1,5 @@
-# IMPC_API_HELPER
-`impc_api_helper` is a python package.
+# IMPC_API
+`impc_api` is a python package.
 
 The functions in this package are intended for use on a Jupyter Notebook.
 
@@ -13,7 +13,7 @@ The functions in this package are intended for use on a Jupyter Notebook.
 The available functions can be imported as:
 
 ```
-from impc_api_helper import solr_request, batch_solr_request
+from impc_api import solr_request, batch_solr_request
 ```
 
 ## 1. Solr request

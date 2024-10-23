@@ -2,7 +2,7 @@ from IPython.display import display
 from tqdm import tqdm
 import pandas as pd
 import requests
-from impc_api_helper.utils.validators import CoreParamsValidator
+from impc_api.utils.validators import CoreParamsValidator
 
 # Display the whole dataframe <15
 pd.set_option("display.max_rows", 15)

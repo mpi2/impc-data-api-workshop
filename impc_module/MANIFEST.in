@@ -1,1 +1,1 @@
-include impc_api_helper/utils/core_fields.json
+include impc_api/utils/core_fields.json

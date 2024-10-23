@@ -4,7 +4,7 @@ from typing import List, Dict
 from pathlib import Path
 import warnings
 from dataclasses import dataclass, field
-from impc_api_helper.utils.warnings import (
+from impc_api.utils.warnings import (
     warning_config,
     InvalidCoreWarning,
     InvalidFieldWarning,
