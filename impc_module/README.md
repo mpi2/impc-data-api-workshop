@@ -42,7 +42,6 @@ num_found, df = solr_request(
          "facet.field": "zygosity",
          "facet.limit": 15,
          "facet.mincount": 1,
-     ,
     }
 )
 ```
