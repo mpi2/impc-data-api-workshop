@@ -1,9 +1,26 @@
-from pydantic import BaseModel, model_validator, field_validator
+"""
+This module provides validation for core fields and download formats using Pydantic models. 
+
+Classes:
+    - ValidationJson: Loads and validates core fields from a JSON configuration file.
+    - CoreParamsValidator: Validates core names and associated fields (fl), issuing warnings for invalid inputs.
+    - DownloadFormatValidator: Validates the download format (wt) to ensure it is supported (json or csv).
+
+Functions:
+    - get_fields(fields: str) -> List[str]: Parses a comma-separated string of field names into a list.
+
+Custom Exceptions:
+    - InvalidCoreWarning: Raised for invalid core names.
+    - InvalidFieldWarning: Raised for unexpected field names.
+    - UnsupportedDownloadFormatError: Raised for unsupported download formats.
+"""
+
 import json
-from typing import List, Dict
-from pathlib import Path
 import warnings
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import List, Dict
+from pydantic import BaseModel, model_validator, field_validator
 from impc_api.utils.warnings import (
     warning_config,
     InvalidCoreWarning,
@@ -13,7 +30,6 @@ from impc_api.utils.warnings import (
 
 # Initialise warning config
 warning_config()
-
 
 # Dataclass for the json validator
 @dataclass
