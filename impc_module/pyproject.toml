@@ -6,15 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "impc_api"
 version = "1.0.0"
 description = "A package to facilitate making API requests to the IMPC Solr API"
-long_description_content_type = "text/x-rst"
-long_description = """
-IMPC_API
-========
-
-``impc_api`` is a python package.
-
-**Install the package running**: ``pip install impc_api``
-"""
+long_description_content_type = "text/markdown"
 authors = [
     { name = "MPI2" },
     { name = "Marina Kan" },
