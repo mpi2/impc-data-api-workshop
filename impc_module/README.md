@@ -1,23 +1,27 @@
 # IMPC_API
 
-`impc_api` is a python package.
+`impc_api` is a Python package.
   
-The functions in this package are intended for use on a Jupyter Notebook.
+The functions in this package are intended for use in a Jupyter Notebook.
+
+## Installation Instructions
 
 1. **Create a virtual environment (optional but recommended)**:
 On Mac:
- `python3 -m venv .venv`
- `source .venv/bin/activate`
+ ```bash
+ python3 -m venv .venv
+ source .venv/bin/activate
+ ```
 
-2. **Install the package running**: `pip install impc_api`
-3. **Try it out**: Create a [Jupyter Notebook](https://jupyter.org/install#jupyter-notebook) and try some of the examples below:
+2. **Install the package**: `pip install impc_api`
+3. **Install Jupyter**: `pip install jupyter`
+4. **Run the Jupyter Notebook**: `jupyter notebook`
 
-## Installing the package for the first time
+After executing the command, the Jupyter interface should open in your browser. If it does not, follow the instructions provided in the terminal.
 
-1. Clone the repository and navigate into it. Navigate into the package name until you can see `setup.py` and `pyproject.toml`
-2. Run `python3 -m build`, this builds the package, a couple of new files/folders will appear.
-3. Install the package running `pip install .`
-4. Try it out: Go to Jupyter Notebook and some examples below:
+5. **Try it out**:
+
+Create a [Jupyter Notebook](https://jupyter-notebook.readthedocs.io/en/latest/) and try some of the examples below:
 
 ### Available functions
 
