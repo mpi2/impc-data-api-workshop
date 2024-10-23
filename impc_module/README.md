@@ -1,8 +1,14 @@
-# IMPC_API_HELPER
-`impc_api_helper` is a python package.
+# IMPC_API
+`impc_api` is a python package.
 
 The functions in this package are intended for use on a Jupyter Notebook.
+1. **Create a virtual environment (optional but recommended)**:
+On Mac:
+ `python3 -m venv .venv`
+ `source .venv/bin/activate` 
 
+3.  **Install the package running**: `pip install impc_api`
+4. **Try it out**: Create a [Jupyter Notebook](https://jupyter.org/install#jupyter-notebook) and try some of the examples below:
 ## Installing the package for the first time
 1. Clone the repository and navigate into it. Navigate into the package name until you can see `setup.py` and `pyproject.toml`
 2. Run `python3 -m build`, this builds the package, a couple of new files/folders will appear.
@@ -13,13 +19,15 @@ The functions in this package are intended for use on a Jupyter Notebook.
 The available functions can be imported as:
 
 ```
-from impc_api_helper import solr_request, batch_solr_request
+from impc_api import solr_request, batch_solr_request
 ```
 
 ## 1. Solr request
 The most basic request to the IMPC solr API
 ```
-num_found, df = solr_request( core='genotype-phenotype', params={
+num_found, df = solr_request(
+    core='genotype-phenotype', 
+    params={
         'q': '*:*',
         'rows': 10, 
         'fl': 'marker_symbol,allele_symbol,parameter_stable_id'
@@ -32,25 +40,26 @@ num_found, df = solr_request( core='genotype-phenotype', params={
 
 ```
 num_found, df = solr_request(
-     core="genotype-phenotype",
-     params={
+    core="genotype-phenotype",
+    params={
          "q": "*:*",
          "rows": 0,
          "facet": "on",
          "facet.field": "zygosity",
          "facet.limit": 15,
          "facet.mincount": 1,
-     },
- )
+    }
+)
 ```
 
 ### b. Solr request validation
 A common pitfall when writing a query is the misspelling of `core` and `fields` arguments. For this, we have included a `validate` argument that raises a warning when these values are not as expected. Note this does not prevent you from executing a query; it just alerts you to a potential issue.
 
-
 #### Core validation
 ```
-num_found, df = solr_request( core='invalid_core', params={
+num_found, df = solr_request(
+    core='invalid_core',
+    params={
         'q': '*:*',
         'rows': 10
     },
@@ -58,12 +67,14 @@ num_found, df = solr_request( core='invalid_core', params={
 )
 
 > InvalidCoreWarning: Invalid core: "genotype-phenotyp", select from the available cores:
-> dict_keys(['experiment', 'genotype-phenotype', 'impc_images', 'phenodigm', 'statistical-result']))
+> dict_keys(['experiment', 'genotype-phenotype', 'impc_images', 'phenodigm', 'statistical-result'])
 ```
 
 #### Field list validation
 ```
-num_found, df = solr_request( core='genotype-phenotype', params={
+num_found, df = solr_request(
+    core='genotype-phenotype',
+    params={
         'q': '*:*',
         'rows': 10,
         'fl': 'invalid_field,marker_symbol,allele_symbol'
@@ -126,7 +137,7 @@ Pass the list to the `field_list` param and specify the type of `fl` in `field_t
 
 ```
 # List of gene symbols
-genes = ["Zfp580","Firrm","Gpld1","Mbip"]
+genes = ["Zfp580", "Firrm", "Gpld1", "Mbip"]
 
 df = batch_solr_request(
     core='genotype-phenotype',
@@ -140,11 +151,11 @@ df = batch_solr_request(
 )
 print(df.head())
 ```
-This too can be downloaded
+This can be downloaded too:
 
 ```
 # List of gene symbols
-genes = ["Zfp580","Firrm","Gpld1","Mbip"]
+genes = ["Zfp580", "Firrm", "Gpld1", "Mbip"]
 
 df = batch_solr_request(
     core='genotype-phenotype',
@@ -159,6 +170,3 @@ df = batch_solr_request(
 )
 print(df.head())
 ```
-
-
-
