@@ -1,9 +1,8 @@
-import pytest
 from unittest.mock import patch
+import pytest
+from impc_api.utils.warnings import InvalidCoreWarning, InvalidFieldWarning
 from solr_request import solr_request, _process_faceting
 from .test_helpers import check_url_status_code_and_params
-from impc_api.utils.warnings import InvalidCoreWarning, InvalidFieldWarning
-
 
 class TestSolrRequest:
     """Test class for the Solr Request function

@@ -1,6 +1,11 @@
-import pytest
+import json
 from pathlib import Path
 from unittest.mock import patch, call, Mock
+
+import pandas as pd
+import pytest
+from pandas.testing import assert_frame_equal
+
 from impc_api.batch_solr_request import (
     batch_solr_request,
     _batch_solr_generator,
@@ -13,10 +18,6 @@ from impc_api.utils.warnings import (
     RowsParamIgnored,
     UnsupportedDownloadFormatError,
 )
-import json
-import pandas as pd
-from pandas.testing import assert_frame_equal
-
 
 # When rows is passed to batch solr request, a warning is raised.
 # Let's ignore this warning in all tests except the one that asserts the warning

@@ -1,13 +1,13 @@
-from IPython.display import display
-from tqdm import tqdm
 import pandas as pd
 import requests
+from IPython.display import display
+from tqdm import tqdm
+
 from impc_api.utils.validators import CoreParamsValidator
 
 # Display the whole dataframe <15
 pd.set_option("display.max_rows", 15)
 pd.set_option("display.max_columns", None)
-
 
 # Create helper function
 def solr_request(core, params, silent=False, validate=False):
