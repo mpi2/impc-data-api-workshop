@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='impc_api',
-    version='1.0.0',
+    version='1.0.1',
     description='A package to facilitate making API request to the IMPC Solr API',
     author='MPI2, Marina Kan, Diego Pava',
     url='https://github.com/mpi2/impc-data-api-workshop',
