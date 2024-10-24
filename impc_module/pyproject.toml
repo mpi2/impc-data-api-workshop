@@ -6,7 +6,6 @@ build-backend = "setuptools.build_meta"
 name = "impc_api"
 version = "1.0.1"
 description = "A package to facilitate making API requests to the IMPC Solr API"
-long_description_content_type = "text/markdown"
 authors = [
     { name = "MPI2" },
     { name = "Marina Kan" },
@@ -19,7 +18,7 @@ dependencies = [
     "pydantic>=2.9"
 ]
 
-readme = "README.md"
+readme = "impc_module/README.md"
 requires-python = ">=3.10"
 
 [project.optional-dependencies]
