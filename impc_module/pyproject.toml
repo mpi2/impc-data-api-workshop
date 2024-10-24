@@ -18,7 +18,7 @@ dependencies = [
     "pydantic>=2.9"
 ]
 
-readme = "impc_module/README.md"
+readme = "README.md"
 requires-python = ">=3.10"
 
 [project.optional-dependencies]
