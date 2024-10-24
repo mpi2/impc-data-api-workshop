@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "impc_api"
-version = "1.0.2"
+version = "1.0.3"
 description = "A package to facilitate making API requests to the IMPC Solr API"
 authors = [
     { name = "MPI2" },
