@@ -1,5 +1,6 @@
 # IMPC Data API Workshop Repository
-Welcome to the IMPC Data API Workshop repository! This repository is designed to provide all the resources you need to follow along with our workshop on building and using data APIs. Below is an overview of the contents of this repository:
+Welcome to the IMPC Data API Workshop repository! This repository is designed to provide all the resources you need to follow along with our workshop (2024-05-20) on building and using data APIs. Below is an overview of the contents of this repository:
+
 1. **Exercises**<br>
 The `exercises` folder contains hands-on practice tasks and correct answers. If you would like to go through the exercises, use `impc_workshop_exercises.ipynb`. If you would like to look at the correct answers, take a look at `impc_workshop_answers.ipynb`.
 
@@ -10,10 +11,12 @@ The `presentations` folder includes all the slide decks used during the workshop
 The `cheat_sheet.ipynb` file is a Jupyter Notebook that serves as a quick reference guide for common API tasks and commands.
 
 ### Useful Links
+- [Workshop recording on YouTube](https://www.youtube.com/watch?v=5mdduPm1oWc)
 - [IMPC website](https://www.mousephenotype.org/)
 - [IMPC SOLR cores documentation](https://www.ebi.ac.uk/mi/impc/solrdoc/)
 - [IMPReSS](https://www.mousephenotype.org/impress/index) | International Mouse Phenotyping Resource of Standardised Screens
 - [GenTaR](https://www.gentar.org/tracker/#/) | The Genome Targeting Repository<br>
+
 ### Phenodigm useful links:<br>
 - [IMPC disease models summary](https://www.mousephenotype.org/help/data-visualization/gene-pages/disease-models/)
 - [IMPC disease associations](https://www.mousephenotype.org/help/data-analysis/disease-associations/)
@@ -78,7 +81,9 @@ We advice this approach for preliminary exploration of the material, if you wish
    - Binder has a maximum of simultaneous users per repo, to ensure you can use the material, opt for [Installation Option 1](#1-local-installation-with-pip-and-jupyter).
    - Note some of the existing queries in the exercises might not work due to the resource cap from Binder.
 
+Based on the workshop material, we created a Python package called `impc_api`. Documentation on how to download, available functions, and usage instructions can be found [here](https://github.com/mpi2/impc-api). 
 
+Note: Some functions in the package have been updated compared to the workshop material.
 ---
 
 Happy coding! 
