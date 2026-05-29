@@ -1,7 +1,6 @@
 variables:
   DS_ENFORCE_NEW_ANALYZER: 'true'
   GITLAB_ADVANCED_SAST_ENABLED: 'true'
-  SCAN_KUBERNETES_MANIFESTS: 'true'
 
 include:
   - template: Jobs/SAST.gitlab-ci.yml
